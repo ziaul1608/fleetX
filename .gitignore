@@ -1,0 +1,59 @@
+# ==============================================================================
+# FleetX — Monorepo Git Ignore
+# ==============================================================================
+
+# OS & Filesystem Metadata
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment & Secrets (Never commit secrets!)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Java & Maven Artifacts
+backend/target/
+backend/*.jar
+backend/*.war
+backend/.mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.properties
+
+# Node & Frontend Build Artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/*.tsbuildinfo
+
+# Test Logs & Coverage
+*.log
+backend/log/
+backend/logs/
+frontend/coverage/
+.nyc_output/
+
+# IDE & Editor Configurations
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# Temporary & Scratch Files
+scratch/
+tmp/
+temp/

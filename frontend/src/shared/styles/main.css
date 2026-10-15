@@ -1,0 +1,308 @@
+/* ==============================================================================
+   FleetX — Control Tower Light Theme Design System
+   ============================================================================== */
+
+:root {
+  --fx-bg-canvas: #f8fafc;
+  --fx-bg-surface: #ffffff;
+  --fx-bg-subtle: #f1f5f9;
+  --fx-border: #e2e8f0;
+  --fx-border-subtle: #edf2f7;
+
+  --fx-text-primary: #0f172a;
+  --fx-text-secondary: #475569;
+  --fx-text-muted: #94a3b8;
+
+  --fx-primary: #1d4ed8;
+  --fx-primary-hover: #1e40af;
+  --fx-primary-light: #eff6ff;
+  --fx-accent-teal: #0d9488;
+  --fx-accent-teal-light: #f0fdfa;
+
+  --fx-success: #16a34a;
+  --fx-success-bg: #f0fdf4;
+  --fx-warning: #d97706;
+  --fx-warning-bg: #fffbeb;
+  --fx-danger: #dc2626;
+  --fx-danger-bg: #fef2f2;
+
+  --fx-sidebar-width: 260px;
+  --fx-sidebar-collapsed-width: 72px;
+  --fx-header-height: 64px;
+  --fx-radius: 8px;
+  --fx-radius-lg: 12px;
+  --fx-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --fx-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --fx-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--fx-bg-canvas);
+  color: var(--fx-text-primary);
+  font-size: 0.925rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* App Shell Layout */
+.fx-app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.fx-sidebar {
+  width: var(--fx-sidebar-width);
+  background-color: var(--fx-bg-surface);
+  border-right: 1px solid var(--fx-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fx-sidebar.collapsed {
+  width: var(--fx-sidebar-collapsed-width);
+}
+
+.fx-main-wrapper {
+  flex: 1;
+  margin-left: var(--fx-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fx-main-wrapper.sidebar-collapsed {
+  margin-left: var(--fx-sidebar-collapsed-width);
+}
+
+.fx-topbar {
+  height: var(--fx-header-height);
+  background-color: var(--fx-bg-surface);
+  border-bottom: 1px solid var(--fx-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+}
+
+.fx-content-area {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Nav Link Items */
+.fx-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  margin: 0.2rem 0.75rem;
+  border-radius: var(--fx-radius);
+  color: var(--fx-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.fx-nav-item:hover {
+  background-color: var(--fx-bg-subtle);
+  color: var(--fx-text-primary);
+}
+
+.fx-nav-item.active {
+  background-color: var(--fx-primary-light);
+  color: var(--fx-primary);
+  font-weight: 600;
+}
+
+.fx-nav-item .icon {
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.fx-sidebar.collapsed .fx-nav-item .label {
+  display: none;
+}
+
+.fx-sidebar.collapsed .fx-nav-item {
+  justify-content: center;
+  margin: 0.2rem 0.5rem;
+}
+
+.fx-sidebar.collapsed .fx-nav-item .icon {
+  margin-right: 0;
+}
+
+/* Cards & Surfaces */
+.fx-card {
+  background-color: var(--fx-bg-surface);
+  border: 1px solid var(--fx-border);
+  border-radius: var(--fx-radius-lg);
+  box-shadow: var(--fx-shadow-sm);
+  padding: 1.25rem;
+}
+
+.fx-card:hover {
+  border-color: #cbd5e1;
+}
+
+/* Stat Metric Card */
+.fx-stat-card {
+  background-color: var(--fx-bg-surface);
+  border: 1px solid var(--fx-border);
+  border-radius: var(--fx-radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.fx-stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.fx-stat-title {
+  font-size: 0.825rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fx-text-secondary);
+  margin: 0;
+}
+
+.fx-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--fx-text-primary);
+  line-height: 1.2;
+}
+
+.fx-stat-footer {
+  font-size: 0.8rem;
+  color: var(--fx-text-muted);
+  margin-top: 0.5rem;
+}
+
+/* Status Badges */
+.fx-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+.fx-badge-success {
+  background-color: var(--fx-success-bg);
+  color: var(--fx-success);
+  border: 1px solid #bbf7d0;
+}
+
+.fx-badge-warning {
+  background-color: var(--fx-warning-bg);
+  color: var(--fx-warning);
+  border: 1px solid #fde68a;
+}
+
+.fx-badge-danger {
+  background-color: var(--fx-danger-bg);
+  color: var(--fx-danger);
+  border: 1px solid #fecaca;
+}
+
+.fx-badge-info {
+  background-color: var(--fx-primary-light);
+  color: var(--fx-primary);
+  border: 1px solid #bfdbfe;
+}
+
+.fx-badge-secondary {
+  background-color: var(--fx-bg-subtle);
+  color: var(--fx-text-secondary);
+  border: 1px solid var(--fx-border);
+}
+
+/* Empty / Error / Loading States */
+.fx-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background-color: var(--fx-bg-surface);
+  border: 1px dashed var(--fx-border);
+  border-radius: var(--fx-radius-lg);
+}
+
+.fx-state-icon {
+  margin-bottom: 1rem;
+  color: var(--fx-text-muted);
+}
+
+.fx-state-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--fx-text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.fx-state-desc {
+  font-size: 0.875rem;
+  color: var(--fx-text-secondary);
+  max-width: 420px;
+  margin-bottom: 1.25rem;
+}
+
+/* Modern Tables */
+.fx-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fx-table th {
+  background-color: var(--fx-bg-subtle);
+  color: var(--fx-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--fx-border);
+}
+
+.fx-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--fx-border-subtle);
+  font-size: 0.875rem;
+  color: var(--fx-text-primary);
+  vertical-align: middle;
+}
+
+.fx-table tr:hover td {
+  background-color: #fafbfc;
+}

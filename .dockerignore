@@ -1,0 +1,42 @@
+# Git and OS metadata
+.git
+.gitignore
+.DS_Store
+.DS_Store?
+._*
+
+# Environment and Secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Local dependencies and build outputs
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.tsbuildinfo
+
+backend/target/
+backend/*.jar
+backend/*.war
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Test and runtime logs
+*.log
+backend/log/
+backend/logs/
+frontend/coverage/
+
+# IDE and Editor configurations
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Temporary and documentation drafts
+scratch/
+tmp/
+temp/

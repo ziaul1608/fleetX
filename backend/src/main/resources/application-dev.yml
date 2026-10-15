@@ -1,0 +1,32 @@
+# Development profile configurations
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:fleetx_dev;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL;DATABASE_TO_LOWER=TRUE}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
+
+logging:
+  level:
+    com.fleetx: INFO
+    org.springframework.web: INFO
+
+fleetx:
+  bootstrap:
+    admin:
+      enabled: ${BOOTSTRAP_ADMIN_ENABLED:true}
+      email: ${BOOTSTRAP_ADMIN_EMAIL:admin@fleetx.local}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:DevAdmin123!}
+      full-name: ${BOOTSTRAP_ADMIN_NAME:FleetX Administrator}
+  demo:
+    seed:
+      enabled: ${DEMO_SEED_ENABLED:true}
