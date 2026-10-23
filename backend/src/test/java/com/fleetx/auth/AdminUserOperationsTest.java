@@ -218,6 +218,72 @@ public class AdminUserOperationsTest {
     }
 
     @Test
+    @DisplayName("Admin self-deactivation via updateUser is strictly prevented")
+    @WithMockUser(username = "admin@fleetx.test", roles = {"ADMIN"})
+    void shouldPreventSelfDeactivationViaUpdateUser() throws Exception {
+        UserUpdateRequest deactivateSelf = new UserUpdateRequest(
+                "Primary Admin",
+                Set.of("ADMIN"),
+                false
+        );
+
+        mockMvc.perform(put("/api/v1/admin/users/" + adminUser.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(deactivateSelf)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("SELF_DEACTIVATION_PREVENTED"));
+    }
+
+    @Test
+    @DisplayName("Sole active admin cannot be deactivated or demoted, but demotion succeeds when multiple active admins exist")
+    @WithMockUser(username = "admin@fleetx.test", roles = {"ADMIN"})
+    void shouldHandleSoleAdminVersusMultipleAdmins() throws Exception {
+        Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElseThrow();
+
+        // 1. Create a second active admin
+        User secondAdmin = new User("admin2@fleetx.test", passwordEncoder.encode("AdminPass456!"), "Secondary Admin");
+        secondAdmin.setActive(true);
+        secondAdmin.setRoles(Set.of(adminRole));
+        secondAdmin = userRepository.save(secondAdmin);
+
+        // 2. With 2 active admins, demoting secondAdmin succeeds
+        UserUpdateRequest demoteSecond = new UserUpdateRequest(
+                "Secondary Admin",
+                Set.of("DRIVER"),
+                true
+        );
+        mockMvc.perform(put("/api/v1/admin/users/" + secondAdmin.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(demoteSecond)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.roles[0]").value("DRIVER"));
+
+        // 3. Now only 1 active admin remains. Demoting adminUser must fail
+        UserUpdateRequest demoteLast = new UserUpdateRequest(
+                "Primary Admin",
+                Set.of("DRIVER"),
+                true
+        );
+        mockMvc.perform(put("/api/v1/admin/users/" + adminUser.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(demoteLast)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("PRIVILEGE_DEMOTION_PREVENTED"));
+
+        // 4. Deactivating the sole remaining active admin via status endpoint fails
+        UserStatusUpdateRequest deactivateLast = new UserStatusUpdateRequest(false, "Lockout attempt");
+        mockMvc.perform(put("/api/v1/admin/users/" + adminUser.getId() + "/status")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(deactivateLast)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("SELF_DEACTIVATION_PREVENTED"));
+    }
+
+    @Test
     @DisplayName("Admin can deactivate a non-admin user")
     @WithMockUser(username = "admin@fleetx.test", roles = {"ADMIN"})
     void shouldDeactivateTargetUser() throws Exception {

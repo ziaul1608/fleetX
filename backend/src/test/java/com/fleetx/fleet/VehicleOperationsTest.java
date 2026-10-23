@@ -10,6 +10,8 @@ import com.fleetx.fleet.repository.FuelRecordRepository;
 import com.fleetx.fleet.repository.MaintenanceRecordRepository;
 import com.fleetx.fleet.repository.ServiceWarningRepository;
 import com.fleetx.fleet.repository.VehicleRepository;
+import com.fleetx.drivers.entity.Trip;
+import com.fleetx.drivers.repository.TripRepository;
 import com.fleetx.shared.contract.VehicleLookupService;
 import com.fleetx.shared.dto.VehicleSummaryDto;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +57,9 @@ public class VehicleOperationsTest {
     private ServiceWarningRepository warningRepository;
 
     @Autowired
+    private TripRepository tripRepository;
+
+    @Autowired
     private VehicleLookupService vehicleLookupService;
 
     @BeforeEach
@@ -61,6 +67,7 @@ public class VehicleOperationsTest {
         warningRepository.deleteAll();
         maintenanceRecordRepository.deleteAll();
         fuelRecordRepository.deleteAll();
+        tripRepository.deleteAll();
         vehicleRepository.deleteAll();
     }
 
@@ -313,5 +320,120 @@ public class VehicleOperationsTest {
         saved.setActive(false);
         vehicleRepository.save(saved);
         assertThat(vehicleLookupService.isVehicleAvailableForTrip(saved.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should prevent transition to MAINTENANCE or RETIRED when vehicle has an active trip")
+    @WithMockUser(username = "manager@fleetx.test", roles = {"FLEET_MANAGER"})
+    void shouldPreventTransitionWhenActiveTripExists() throws Exception {
+        Vehicle vehicle = vehicleRepository.save(new Vehicle(
+                "1HGCR2F83HA003333",
+                "MH-12-TR-3333",
+                "Tata",
+                "Signa 4825",
+                2023,
+                "TRUCK",
+                "DIESEL",
+                30000.0,
+                55.0,
+                10000.0,
+                "AVAILABLE"
+        ));
+
+        Trip activeTrip = new Trip();
+        activeTrip.setTripCode("TRIP-ACTIVE-999");
+        activeTrip.setVehicleId(vehicle.getId());
+        activeTrip.setDriverId(101L);
+        activeTrip.setOriginAddress("Pune Hub");
+        activeTrip.setDestinationAddress("Mumbai Port");
+        activeTrip.setStatus("ASSIGNED");
+        activeTrip.setScheduledStartTime(Instant.now());
+        tripRepository.save(activeTrip);
+
+        // 1. Attempt status change to MAINTENANCE via PATCH
+        VehicleStatusUpdateRequest maintenanceStatus = new VehicleStatusUpdateRequest("MAINTENANCE", "Scheduled overhaul");
+        mockMvc.perform(patch("/api/v1/fleet/vehicles/" + vehicle.getId() + "/status")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(maintenanceStatus)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("VEHICLE_HAS_ACTIVE_TRIP"));
+
+        // 2. Attempt update to RETIRED via PUT
+        VehicleUpdateRequest retireRequest = new VehicleUpdateRequest(
+                "Tata",
+                "Signa 4825",
+                2023,
+                "TRUCK",
+                "DIESEL",
+                30000.0,
+                55.0,
+                "RETIRED",
+                false
+        );
+        mockMvc.perform(put("/api/v1/fleet/vehicles/" + vehicle.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(retireRequest)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("VEHICLE_HAS_ACTIVE_TRIP"));
+    }
+
+    @Test
+    @DisplayName("Should permit transition to MAINTENANCE or RETIRED when trip is completed or cancelled")
+    @WithMockUser(username = "manager@fleetx.test", roles = {"FLEET_MANAGER"})
+    void shouldPermitTransitionWhenNoActiveTrip() throws Exception {
+        Vehicle vehicle = vehicleRepository.save(new Vehicle(
+                "1HGCR2F83HA004444",
+                "MH-12-TR-4444",
+                "Tata",
+                "Prima 2830",
+                2024,
+                "TRUCK",
+                "DIESEL",
+                28000.0,
+                50.0,
+                5000.0,
+                "AVAILABLE"
+        ));
+
+        Trip completedTrip = new Trip();
+        completedTrip.setTripCode("TRIP-DONE-888");
+        completedTrip.setVehicleId(vehicle.getId());
+        completedTrip.setDriverId(102L);
+        completedTrip.setOriginAddress("Pune Hub");
+        completedTrip.setDestinationAddress("Nagpur Hub");
+        completedTrip.setStatus("COMPLETED");
+        completedTrip.setScheduledStartTime(Instant.now());
+        tripRepository.save(completedTrip);
+
+        // 1. Status change to MAINTENANCE should succeed
+        VehicleStatusUpdateRequest maintenanceStatus = new VehicleStatusUpdateRequest("MAINTENANCE", "Routine service");
+        mockMvc.perform(patch("/api/v1/fleet/vehicles/" + vehicle.getId() + "/status")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(maintenanceStatus)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("MAINTENANCE"));
+
+        // 2. Update to RETIRED should succeed
+        VehicleUpdateRequest retireRequest = new VehicleUpdateRequest(
+                "Tata",
+                "Prima 2830",
+                2024,
+                "TRUCK",
+                "DIESEL",
+                28000.0,
+                50.0,
+                "RETIRED",
+                false
+        );
+        mockMvc.perform(put("/api/v1/fleet/vehicles/" + vehicle.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(retireRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("RETIRED"))
+                .andExpect(jsonPath("$.data.active").value(false));
     }
 }

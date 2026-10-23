@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Shield, Key, Calendar, LogOut, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, Key, Calendar, LogOut, CheckCircle2, XCircle, Lock, AlertCircle } from 'lucide-react';
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { LoadingState } from '../../../shared/components/LoadingState';
 import { ErrorState } from '../../../shared/components/ErrorState';
@@ -15,6 +15,64 @@ export const ProfilePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isUnauthenticated, setIsUnauthenticated] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  // Self-service password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdError, setPwdError] = useState<string | null>(null);
+  const [pwdSuccess, setPwdSuccess] = useState<string | null>(null);
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwdError(null);
+    setPwdSuccess(null);
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPwdError('All password fields are required.');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPwdError('New password must be at least 8 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPwdError('New password and confirmation do not match.');
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      setPwdError('New password cannot be identical to your current password.');
+      return;
+    }
+
+    setPwdLoading(true);
+    try {
+      await authApi.changePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+      setPwdSuccess('Password changed successfully. Your account is secured with the updated credential.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: unknown) {
+      const apiErr = err as { status?: number; errorCode?: string; message?: string };
+      if (apiErr.errorCode === 'INVALID_CURRENT_PASSWORD' || apiErr.message?.includes('Current password is incorrect')) {
+        setPwdError('The current password entered is incorrect. Please verify and retry.');
+      } else if (apiErr.errorCode === 'PASSWORD_REUSE_PREVENTED') {
+        setPwdError('New password cannot be identical to your current password.');
+      } else {
+        setPwdError(apiErr.message || 'Failed to update password. Please check your credentials.');
+      }
+    } finally {
+      setPwdLoading(false);
+    }
+  };
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -92,9 +150,9 @@ export const ProfilePage: React.FC = () => {
       </PageHeader>
 
       <div className="row g-4">
-        {/* Profile Card */}
-        <div className="col-12 col-lg-7">
-          <div className="fx-card h-100">
+        {/* Profile & Security Management */}
+        <div className="col-12 col-lg-7 d-flex flex-column gap-4">
+          <div className="fx-card">
             <div className="d-flex align-items-center gap-3 pb-3 border-bottom mb-4">
               <div
                 className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
@@ -169,6 +227,112 @@ export const ProfilePage: React.FC = () => {
                 </Link>
               </div>
             )}
+          </div>
+
+          {/* Password Change Card */}
+          <div className="fx-card">
+            <h4 className="fs-6 fw-bold text-slate-900 mb-1 d-flex align-items-center gap-2">
+              <Lock size={18} className="text-primary" /> Update Password
+            </h4>
+            <p className="text-muted small mb-3">
+              Self-service password update. Enter your current password and choose a secure replacement (minimum 8 characters).
+            </p>
+
+            {pwdSuccess && (
+              <div className="alert alert-success d-flex align-items-center gap-2 small py-2 mb-3 shadow-sm" role="alert">
+                <CheckCircle2 size={16} className="text-success flex-shrink-0" />
+                <div>{pwdSuccess}</div>
+              </div>
+            )}
+
+            {pwdError && (
+              <div className="alert alert-danger d-flex align-items-center gap-2 small py-2 mb-3 shadow-sm" role="alert">
+                <AlertCircle size={16} className="text-danger flex-shrink-0" />
+                <div>{pwdError}</div>
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordSubmit}>
+              <div className="mb-3">
+                <label className="form-label small fw-medium text-secondary" htmlFor="profile-current-password">
+                  Current Password <span className="text-danger">*</span>
+                </label>
+                <div className="input-group input-group-sm">
+                  <span className="input-group-text bg-light text-muted">
+                    <Lock size={14} />
+                  </span>
+                  <input
+                    id="profile-current-password"
+                    type="password"
+                    className="form-control"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+              </div>
+
+              <div className="row g-2 mb-3">
+                <div className="col-12 col-sm-6">
+                  <label className="form-label small fw-medium text-secondary" htmlFor="profile-new-password">
+                    New Password <span className="text-danger">*</span>
+                  </label>
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-light text-muted">
+                      <Lock size={14} />
+                    </span>
+                    <input
+                      id="profile-new-password"
+                      type="password"
+                      className="form-control"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Min. 8 characters"
+                      required
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-12 col-sm-6">
+                  <label className="form-label small fw-medium text-secondary" htmlFor="profile-confirm-password">
+                    Confirm New Password <span className="text-danger">*</span>
+                  </label>
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-light text-muted">
+                      <Lock size={14} />
+                    </span>
+                    <input
+                      id="profile-confirm-password"
+                      type="password"
+                      className="form-control"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      required
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm px-3 d-inline-flex align-items-center gap-2"
+                disabled={pwdLoading}
+              >
+                {pwdLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                    <span>Updating Password...</span>
+                  </>
+                ) : (
+                  <span>Update Password</span>
+                )}
+              </button>
+            </form>
           </div>
         </div>
 

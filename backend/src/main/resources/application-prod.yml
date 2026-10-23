@@ -64,9 +64,10 @@ fleetx:
     admin:
       # Disabled by default; requires explicit BOOTSTRAP_ADMIN_ENABLED=true and non-empty password
       enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
-      email: ${BOOTSTRAP_ADMIN_EMAIL:admin@fleetx.com}
+      email: ${BOOTSTRAP_ADMIN_EMAIL:admin@fleetx.local}
       password: ${BOOTSTRAP_ADMIN_PASSWORD:}
       full-name: ${BOOTSTRAP_ADMIN_NAME:FleetX Administrator}
+      password-override: ${BOOTSTRAP_ADMIN_PASSWORD_OVERRIDE:false}
   demo:
     seed:
       # STRICTLY DISABLED IN PRODUCTION: No mock vehicles, demo drivers, or test trips

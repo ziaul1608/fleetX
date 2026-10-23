@@ -296,6 +296,18 @@ public class TripService implements TripLookupService {
                 .orElse(false);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasActiveTripForVehicle(Long vehicleId) {
+        if (vehicleId == null) {
+            return false;
+        }
+        return tripRepository.existsByVehicleIdAndStatusIn(
+                vehicleId,
+                List.of(TripStatus.ASSIGNED.name(), TripStatus.IN_PROGRESS.name(), "IN_TRANSIT")
+        );
+    }
+
     private String generateUniqueTripCode() {
         int year = LocalDate.now().getYear();
         String code;

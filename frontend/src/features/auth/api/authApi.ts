@@ -6,6 +6,7 @@ import {
   UserUpdateRequest,
   UserStatusUpdateRequest,
   AdminPasswordResetRequest,
+  PasswordChangeRequest,
   AuditLogDto,
   CsrfResponseData,
   RoleType,
@@ -49,6 +50,13 @@ export const authApi = {
   async getMe(): Promise<UserDto> {
     const response = await apiClient.get<ApiResponse<UserDto>>('/api/v1/auth/me');
     return response.data.data;
+  },
+
+  /**
+   * Self-service password change for authenticated user
+   */
+  async changePassword(payload: PasswordChangeRequest): Promise<void> {
+    await apiClient.put<ApiResponse<void>>('/api/v1/auth/password', payload);
   },
 
   /**

@@ -3,6 +3,7 @@ package com.fleetx.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fleetx.FleetxApplication;
 import com.fleetx.auth.dto.LoginRequest;
+import com.fleetx.auth.dto.PasswordChangeRequest;
 import com.fleetx.auth.entity.Role;
 import com.fleetx.auth.entity.User;
 import com.fleetx.auth.repository.AuditLogRepository;
@@ -27,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = FleetxApplication.class)
@@ -194,5 +196,126 @@ public class AuthLifecycleTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.headerName").value("X-CSRF-TOKEN"));
+    }
+
+    @Test
+    @DisplayName("Authenticated user should successfully change password with valid current password")
+    void shouldChangePasswordSuccessfullyWhenAuthenticated() throws Exception {
+        // 1. Login to establish authenticated session
+        LoginRequest loginReq = new LoginRequest("admin@fleetx.test", "SecretPass123!");
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+        assertThat(session).isNotNull();
+
+        // 2. Perform password change
+        PasswordChangeRequest changeReq = new PasswordChangeRequest(
+                "SecretPass123!",
+                "NewStrongPass999!",
+                "NewStrongPass999!"
+        );
+
+        mockMvc.perform(put("/api/v1/auth/password")
+                        .session(session)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(changeReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Password updated successfully."));
+
+        // 3. Verify audit log
+        assertThat(auditLogRepository.findAll())
+                .anyMatch(l -> "USER_PASSWORD_CHANGED".equals(l.getAction()));
+
+        // 4. Verify login with old password fails
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("admin@fleetx.test", "SecretPass123!"))))
+                .andExpect(status().isUnauthorized());
+
+        // 5. Verify login with new password succeeds
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("admin@fleetx.test", "NewStrongPass999!"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.email").value("admin@fleetx.test"));
+    }
+
+    @Test
+    @DisplayName("Password change should fail when current password is wrong")
+    void shouldRejectPasswordChangeWithWrongCurrentPassword() throws Exception {
+        LoginRequest loginReq = new LoginRequest("admin@fleetx.test", "SecretPass123!");
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+
+        PasswordChangeRequest changeReq = new PasswordChangeRequest(
+                "IncorrectPass!",
+                "NewStrongPass999!",
+                "NewStrongPass999!"
+        );
+
+        mockMvc.perform(put("/api/v1/auth/password")
+                        .session(session)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(changeReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_CURRENT_PASSWORD"));
+
+        assertThat(auditLogRepository.findAll())
+                .anyMatch(l -> "USER_PASSWORD_CHANGE_FAILED".equals(l.getAction()));
+    }
+
+    @Test
+    @DisplayName("Password change should fail when new password and confirmation mismatch")
+    void shouldRejectPasswordChangeWithMismatchedConfirmation() throws Exception {
+        LoginRequest loginReq = new LoginRequest("admin@fleetx.test", "SecretPass123!");
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+
+        PasswordChangeRequest changeReq = new PasswordChangeRequest(
+                "SecretPass123!",
+                "NewStrongPass999!",
+                "DifferentConfirmation123!"
+        );
+
+        mockMvc.perform(put("/api/v1/auth/password")
+                        .session(session)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(changeReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("PASSWORD_MISMATCH"));
+    }
+
+    @Test
+    @DisplayName("Unauthenticated request to change password should return 401")
+    void shouldRejectUnauthenticatedPasswordChange() throws Exception {
+        PasswordChangeRequest changeReq = new PasswordChangeRequest(
+                "AnyOldPassword!",
+                "NewStrongPass999!",
+                "NewStrongPass999!"
+        );
+
+        mockMvc.perform(put("/api/v1/auth/password")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(changeReq)))
+                .andExpect(status().isUnauthorized());
     }
 }

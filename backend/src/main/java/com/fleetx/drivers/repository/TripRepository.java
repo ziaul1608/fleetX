@@ -47,4 +47,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     @Query("SELECT COUNT(t) FROM Trip t WHERE t.scheduledStartTime >= :startOfDay AND t.scheduledStartTime < :endOfDay")
     long countTripsDispatchedOnDate(@Param("startOfDay") Instant startOfDay, @Param("endOfDay") Instant endOfDay);
+
+    @Query("SELECT COUNT(t) > 0 FROM Trip t WHERE t.vehicleId = :vehicleId AND t.status IN :activeStatuses")
+    boolean existsByVehicleIdAndStatusIn(@Param("vehicleId") Long vehicleId, @Param("activeStatuses") java.util.Collection<String> activeStatuses);
 }

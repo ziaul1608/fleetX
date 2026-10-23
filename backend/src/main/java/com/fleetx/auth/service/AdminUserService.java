@@ -122,19 +122,9 @@ public class AdminUserService {
         boolean isSelf = user.getEmail().equalsIgnoreCase(currentAdminEmail);
 
         Set<Role> targetRoles = resolveRoles(request.roles());
-        boolean hasAdminRole = targetRoles.stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
-
-        // Prevent admin from removing their own admin privilege if they are the sole active admin
-        if (isSelf && !hasAdminRole) {
-            long activeAdminCount = userRepository.countActiveUsersWithRole("ROLE_ADMIN");
-            if (activeAdminCount <= 1) {
-                throw new DomainException(
-                        "Cannot remove ROLE_ADMIN from your account because you are the sole active administrator.",
-                        HttpStatus.BAD_REQUEST,
-                        "PRIVILEGE_DEMOTION_PREVENTED"
-                );
-            }
-        }
+        boolean targetHasAdminRole = targetRoles.stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
+        boolean isCurrentAdmin = user.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
+        boolean isCurrentActive = user.isActive();
 
         // Prevent self-deactivation via update endpoint
         if (isSelf && request.active() != null && !request.active()) {
@@ -143,6 +133,30 @@ public class AdminUserService {
                     HttpStatus.BAD_REQUEST,
                     "SELF_DEACTIVATION_PREVENTED"
             );
+        }
+
+        // Prevent deactivation of sole active administrator
+        if (request.active() != null && !request.active() && isCurrentAdmin && isCurrentActive) {
+            long activeAdminCount = userRepository.countActiveUsersWithRole("ROLE_ADMIN");
+            if (activeAdminCount <= 1) {
+                throw new DomainException(
+                        "Cannot deactivate the sole remaining active administrator.",
+                        HttpStatus.BAD_REQUEST,
+                        "LAST_ADMIN_DEACTIVATION_PREVENTED"
+                );
+            }
+        }
+
+        // Prevent demotion of sole active administrator (self or another admin)
+        if (isCurrentAdmin && isCurrentActive && !targetHasAdminRole) {
+            long activeAdminCount = userRepository.countActiveUsersWithRole("ROLE_ADMIN");
+            if (activeAdminCount <= 1) {
+                throw new DomainException(
+                        "Cannot remove ROLE_ADMIN from account because it is the sole active administrator.",
+                        HttpStatus.BAD_REQUEST,
+                        "PRIVILEGE_DEMOTION_PREVENTED"
+                );
+            }
         }
 
         user.setFullName(request.fullName().trim());
@@ -183,7 +197,7 @@ public class AdminUserService {
             }
 
             boolean isUserAdmin = user.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
-            if (isUserAdmin) {
+            if (isUserAdmin && user.isActive()) {
                 long activeAdminCount = userRepository.countActiveUsersWithRole("ROLE_ADMIN");
                 if (activeAdminCount <= 1) {
                     throw new DomainException(

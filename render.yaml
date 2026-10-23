@@ -46,3 +46,5 @@ services:
         sync: false
       - key: BOOTSTRAP_ADMIN_PASSWORD
         sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD_OVERRIDE
+        sync: false

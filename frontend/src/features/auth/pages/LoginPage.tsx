@@ -9,8 +9,8 @@ export const LoginPage: React.FC = () => {
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
 
-  const [email, setEmail] = useState('admin@fleetx.local');
-  const [password, setPassword] = useState('DevAdmin123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -137,11 +137,10 @@ export const LoginPage: React.FC = () => {
         </form>
 
         <div className="mt-4 pt-3 border-top text-center text-muted small" style={{ fontSize: '0.75rem' }}>
-          <div className="d-flex align-items-center justify-content-center gap-1 mb-1">
+          <div className="d-flex align-items-center justify-content-center gap-1">
             <ShieldCheck size={14} className="text-success" />
             <span>Spring Security RBAC &bull; Server-Side Session</span>
           </div>
-          <div>Development Admin: <code>admin@fleetx.local</code></div>
         </div>
       </div>
     </div>

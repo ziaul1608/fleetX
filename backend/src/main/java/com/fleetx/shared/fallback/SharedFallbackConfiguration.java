@@ -90,6 +90,12 @@ public class SharedFallbackConfiguration {
                 log.debug("[Fallback] TripLookupService: isTripActive({}) -> false", tripId);
                 return false;
             }
+
+            @Override
+            public boolean hasActiveTripForVehicle(Long vehicleId) {
+                log.debug("[Fallback] TripLookupService: hasActiveTripForVehicle({}) -> false", vehicleId);
+                return false;
+            }
         };
     }
 

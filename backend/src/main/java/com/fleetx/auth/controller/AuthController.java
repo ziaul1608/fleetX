@@ -1,6 +1,7 @@
 package com.fleetx.auth.controller;
 
 import com.fleetx.auth.dto.LoginRequest;
+import com.fleetx.auth.dto.PasswordChangeRequest;
 import com.fleetx.auth.dto.UserResponseDto;
 import com.fleetx.auth.service.AuthService;
 import com.fleetx.shared.dto.ApiResponse;
@@ -44,6 +45,15 @@ public class AuthController {
             Authentication authentication) {
         authService.logout(httpRequest, authentication);
         return ResponseEntity.ok(ApiResponse.ok("Logged out successfully.", null));
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody PasswordChangeRequest request,
+            Authentication authentication,
+            HttpServletRequest httpRequest) {
+        authService.changePassword(request, authentication, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Password updated successfully.", null));
     }
 
     @GetMapping("/csrf")

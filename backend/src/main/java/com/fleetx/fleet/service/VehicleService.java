@@ -7,6 +7,7 @@ import com.fleetx.fleet.entity.VehicleStatus;
 import com.fleetx.fleet.entity.VehicleType;
 import com.fleetx.fleet.repository.ServiceWarningRepository;
 import com.fleetx.fleet.repository.VehicleRepository;
+import com.fleetx.shared.contract.TripLookupService;
 import com.fleetx.shared.contract.VehicleLookupService;
 import com.fleetx.shared.dto.VehicleSummaryDto;
 import com.fleetx.shared.exception.DomainException;
@@ -15,6 +16,7 @@ import com.fleetx.shared.exception.ResourceNotFoundException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,15 +31,18 @@ public class VehicleService implements VehicleLookupService {
     private final ServiceWarningRepository warningRepository;
     private final FuelService fuelService;
     private final MaintenanceService maintenanceService;
+    private final TripLookupService tripLookupService;
 
     public VehicleService(VehicleRepository vehicleRepository,
                           ServiceWarningRepository warningRepository,
                           @Lazy FuelService fuelService,
-                          @Lazy MaintenanceService maintenanceService) {
+                          @Lazy MaintenanceService maintenanceService,
+                          @Lazy TripLookupService tripLookupService) {
         this.vehicleRepository = vehicleRepository;
         this.warningRepository = warningRepository;
         this.fuelService = fuelService;
         this.maintenanceService = maintenanceService;
+        this.tripLookupService = tripLookupService;
     }
 
     @Transactional
@@ -109,7 +114,17 @@ public class VehicleService implements VehicleLookupService {
         // Validate enums
         VehicleType type = VehicleType.fromString(request.getVehicleType());
         FuelType fuelType = FuelType.fromString(request.getFuelType());
-        VehicleStatus status = VehicleStatus.fromString(request.getStatus());
+        VehicleStatus targetStatus = VehicleStatus.fromString(request.getStatus());
+
+        if (targetStatus == VehicleStatus.MAINTENANCE || targetStatus == VehicleStatus.RETIRED) {
+            if (tripLookupService.hasActiveTripForVehicle(id)) {
+                throw new DomainException(
+                        "Cannot transition vehicle #" + id + " to " + targetStatus + " because it is currently assigned to an active trip.",
+                        HttpStatus.CONFLICT,
+                        "VEHICLE_HAS_ACTIVE_TRIP"
+                );
+            }
+        }
 
         vehicle.setMake(request.getMake());
         vehicle.setModel(request.getModel());
@@ -118,7 +133,7 @@ public class VehicleService implements VehicleLookupService {
         vehicle.setFuelType(fuelType.name());
         vehicle.setCapacityKg(request.getCapacityKg());
         vehicle.setCapacityVolumeM3(request.getCapacityVolumeM3());
-        vehicle.setStatus(status.name());
+        vehicle.setStatus(targetStatus.name());
         vehicle.setActive(request.getActive());
 
         Vehicle updated = vehicleRepository.save(vehicle);
@@ -131,6 +146,17 @@ public class VehicleService implements VehicleLookupService {
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
         VehicleStatus targetStatus = VehicleStatus.fromString(request.getStatus());
+
+        if (targetStatus == VehicleStatus.MAINTENANCE || targetStatus == VehicleStatus.RETIRED) {
+            if (tripLookupService.hasActiveTripForVehicle(id)) {
+                throw new DomainException(
+                        "Cannot transition vehicle #" + id + " to " + targetStatus + " because it is currently assigned to an active trip.",
+                        HttpStatus.CONFLICT,
+                        "VEHICLE_HAS_ACTIVE_TRIP"
+                );
+            }
+        }
+
         vehicle.setStatus(targetStatus.name());
 
         Vehicle updated = vehicleRepository.save(vehicle);

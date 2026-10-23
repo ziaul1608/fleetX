@@ -1,6 +1,7 @@
 package com.fleetx.auth.service;
 
 import com.fleetx.auth.dto.LoginRequest;
+import com.fleetx.auth.dto.PasswordChangeRequest;
 import com.fleetx.auth.dto.UserResponseDto;
 import com.fleetx.auth.entity.Role;
 import com.fleetx.auth.entity.User;
@@ -130,6 +131,71 @@ public class AuthService {
                 roleNames,
                 user.isActive(),
                 user.getCreatedAt()
+        );
+    }
+
+    @Transactional
+    public void changePassword(PasswordChangeRequest request, Authentication authentication, HttpServletRequest httpRequest) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BadCredentialsException("No authenticated session found.");
+        }
+
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User with email '" + email + "' not found."));
+
+        if (!user.isActive()) {
+            throw new DomainException(
+                    "Account has been deactivated. Access revoked.",
+                    HttpStatus.FORBIDDEN,
+                    "ACCOUNT_DEACTIVATED"
+            );
+        }
+
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new DomainException(
+                    "New password and confirm password do not match.",
+                    HttpStatus.BAD_REQUEST,
+                    "PASSWORD_MISMATCH"
+            );
+        }
+
+        String clientIp = extractClientIp(httpRequest);
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            auditService.recordEvent(
+                    user.getId(),
+                    "USER_PASSWORD_CHANGE_FAILED",
+                    "USER",
+                    user.getId(),
+                    clientIp,
+                    "{\"email\":\"" + user.getEmail() + "\",\"reason\":\"INVALID_CURRENT_PASSWORD\"}"
+            );
+            throw new DomainException(
+                    "Current password is incorrect.",
+                    HttpStatus.BAD_REQUEST,
+                    "INVALID_CURRENT_PASSWORD"
+            );
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new DomainException(
+                    "New password cannot be identical to current password.",
+                    HttpStatus.BAD_REQUEST,
+                    "PASSWORD_REUSE_PREVENTED"
+            );
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        auditService.recordEvent(
+                user.getId(),
+                "USER_PASSWORD_CHANGED",
+                "USER",
+                user.getId(),
+                clientIp,
+                "{\"email\":\"" + user.getEmail() + "\"}"
         );
     }
 

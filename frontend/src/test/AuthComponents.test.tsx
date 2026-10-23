@@ -12,7 +12,7 @@ import { UserDto } from '../features/auth/types';
 
 vi.mock('../features/auth/api/authApi', () => ({
   authApi: {
-    fetchCsrf: vi.fn(),
+    fetchCsrf: vi.fn().mockResolvedValue({ token: 'test', headerName: 'X-CSRF', parameterName: '_csrf' }),
     login: vi.fn(),
     logout: vi.fn(),
     getMe: vi.fn(),
@@ -21,6 +21,7 @@ vi.mock('../features/auth/api/authApi', () => ({
     updateUser: vi.fn(),
     updateUserStatus: vi.fn(),
     resetPassword: vi.fn(),
+    changePassword: vi.fn(),
   },
 }));
 
@@ -64,6 +65,7 @@ const renderLoginPage = () =>
 describe('Identity & Admin Frontend Components', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(authApi.fetchCsrf).mockResolvedValue({ token: 'test', headerName: 'X-CSRF', parameterName: '_csrf' });
     vi.mocked(authApi.getMe).mockRejectedValue({ status: 401, errorCode: 'UNAUTHORIZED' });
   });
 
@@ -114,6 +116,13 @@ describe('Identity & Admin Frontend Components', () => {
       });
     });
 
+    it('renders email and password inputs empty by default with no development credential hints', () => {
+      renderLoginPage();
+      expect(screen.getByLabelText(/Email Address/i)).toHaveValue('');
+      expect(screen.getByLabelText(/Password/i)).toHaveValue('');
+      expect(screen.queryByText(/Development Admin/i)).not.toBeInTheDocument();
+    });
+
     it('displays error message when login fails with 401 credentials error', async () => {
       vi.mocked(authApi.fetchCsrf).mockResolvedValueOnce({
         token: 'test-token',
@@ -126,6 +135,13 @@ describe('Identity & Admin Frontend Components', () => {
       });
 
       renderLoginPage();
+
+      fireEvent.change(screen.getByLabelText(/Email Address/i), {
+        target: { value: 'admin@fleetx.local' },
+      });
+      fireEvent.change(screen.getByLabelText(/Password/i), {
+        target: { value: 'WrongPassword123!' },
+      });
 
       fireEvent.click(screen.getByRole('button', { name: /Sign In to Control Tower/i }));
 
@@ -146,6 +162,13 @@ describe('Identity & Admin Frontend Components', () => {
       });
 
       renderLoginPage();
+
+      fireEvent.change(screen.getByLabelText(/Email Address/i), {
+        target: { value: 'deactivated@fleetx.local' },
+      });
+      fireEvent.change(screen.getByLabelText(/Password/i), {
+        target: { value: 'AnyPass123!' },
+      });
 
       fireEvent.click(screen.getByRole('button', { name: /Sign In to Control Tower/i }));
 
@@ -343,6 +366,71 @@ describe('Identity & Admin Frontend Components', () => {
         expect(screen.getByText(/Access Restricted/i)).toBeInTheDocument();
       });
       expect(screen.getByText(/session has expired/i)).toBeInTheDocument();
+    });
+
+    it('submits self-service password change and displays success feedback', async () => {
+      vi.mocked(authApi.getMe).mockResolvedValueOnce(mockUsers[0]);
+      vi.mocked(authApi.changePassword).mockResolvedValueOnce();
+
+      render(
+        <BrowserRouter>
+          <ProfilePage />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /Update Password/i })).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/Current Password/i), {
+        target: { value: 'CurrentSecret123!' },
+      });
+      fireEvent.change(screen.getByLabelText(/^New Password/i), {
+        target: { value: 'NewStrongPass2026!' },
+      });
+      fireEvent.change(screen.getByLabelText(/Confirm New Password/i), {
+        target: { value: 'NewStrongPass2026!' },
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Update Password/i }));
+
+      await waitFor(() => {
+        expect(authApi.changePassword).toHaveBeenCalledWith({
+          currentPassword: 'CurrentSecret123!',
+          newPassword: 'NewStrongPass2026!',
+          confirmPassword: 'NewStrongPass2026!',
+        });
+      });
+
+      expect(await screen.findByText(/Password changed successfully/i)).toBeInTheDocument();
+    });
+
+    it('displays error message when new password and confirmation do not match', async () => {
+      vi.mocked(authApi.getMe).mockResolvedValueOnce(mockUsers[0]);
+
+      render(
+        <BrowserRouter>
+          <ProfilePage />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /Update Password/i })).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/Current Password/i), {
+        target: { value: 'CurrentSecret123!' },
+      });
+      fireEvent.change(screen.getByLabelText(/^New Password/i), {
+        target: { value: 'NewPass12345!' },
+      });
+      fireEvent.change(screen.getByLabelText(/Confirm New Password/i), {
+        target: { value: 'DifferentPass12345!' },
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Update Password/i }));
+
+      expect(screen.getByText(/New password and confirmation do not match/i)).toBeInTheDocument();
     });
   });
 });

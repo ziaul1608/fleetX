@@ -31,6 +31,12 @@ export interface AdminPasswordResetRequest {
   newPassword: string;
 }
 
+export interface PasswordChangeRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface AuditLogDto {
   id: number;
   userId: number;
