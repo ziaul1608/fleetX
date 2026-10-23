@@ -57,6 +57,8 @@ public class SecurityConfig {
                                 "/api/health",
                                 "/api/v1/auth/login",
                                 "/api/auth/login",
+                                "/api/v1/auth/otp/**",
+                                "/api/auth/otp/**",
                                 "/api/v1/auth/csrf",
                                 "/api/auth/csrf",
                                 "/ws/fleetx/**"
@@ -70,6 +72,7 @@ public class SecurityConfig {
                         // Public Health Check & Auth Bootstrap
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/otp/**", "/api/auth/otp/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf", "/api/auth/csrf").permitAll()
                         .requestMatchers("/ws/fleetx/**").permitAll()
                         .requestMatchers("/error").permitAll()
@@ -88,6 +91,9 @@ public class SecurityConfig {
                                 "/assets/**",
                                 "/*.png", "/*.jpg", "/*.svg", "/*.ico", "/*.css", "/*.js",
                                 "/login",
+                                "/signup",
+                                "/dashboard",
+                                "/dashboard/**",
                                 "/profile",
                                 "/shipments",
                                 "/shipments/**",

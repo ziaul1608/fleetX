@@ -11,6 +11,9 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
+
     @Column(name = "user_id")
     private Long userId;
 
@@ -35,6 +38,11 @@ public class AuditLog {
     public AuditLog() {}
 
     public AuditLog(Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
+        this(1L, userId, action, entityType, entityId, ipAddress, detailsJson);
+    }
+
+    public AuditLog(Long tenantId, Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
+        this.tenantId = tenantId != null ? tenantId : 1L;
         this.userId = userId;
         this.action = action;
         this.entityType = entityType;
@@ -46,6 +54,9 @@ public class AuditLog {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }

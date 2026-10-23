@@ -1,8 +1,6 @@
 package com.fleetx.auth.controller;
 
-import com.fleetx.auth.dto.LoginRequest;
-import com.fleetx.auth.dto.PasswordChangeRequest;
-import com.fleetx.auth.dto.UserResponseDto;
+import com.fleetx.auth.dto.*;
 import com.fleetx.auth.service.AuthService;
 import com.fleetx.shared.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +21,38 @@ public class AuthController {
 
     public AuthController(AuthService authService) {
         this.authService = authService;
+    }
+
+    @PostMapping("/otp/send-signup")
+    public ResponseEntity<ApiResponse<OtpSentResponse>> sendSignupOtp(
+            @Valid @RequestBody SendSignupOtpRequest request,
+            HttpServletRequest httpRequest) {
+        OtpSentResponse response = authService.sendSignupOtp(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Verification code sent successfully.", response));
+    }
+
+    @PostMapping("/otp/verify-signup")
+    public ResponseEntity<ApiResponse<UserResponseDto>> verifySignupOtp(
+            @Valid @RequestBody VerifySignupOtpRequest request,
+            HttpServletRequest httpRequest) {
+        UserResponseDto userDto = authService.verifySignupOtp(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Registration completed successfully. Welcome to FleetX!", userDto));
+    }
+
+    @PostMapping("/otp/send-login")
+    public ResponseEntity<ApiResponse<OtpSentResponse>> sendLoginOtp(
+            @Valid @RequestBody SendLoginOtpRequest request,
+            HttpServletRequest httpRequest) {
+        OtpSentResponse response = authService.sendLoginOtp(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Verification code sent successfully.", response));
+    }
+
+    @PostMapping("/otp/verify-login")
+    public ResponseEntity<ApiResponse<UserResponseDto>> verifyLoginOtp(
+            @Valid @RequestBody VerifyLoginOtpRequest request,
+            HttpServletRequest httpRequest) {
+        UserResponseDto userDto = authService.verifyLoginOtp(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Login successful. Welcome back!", userDto));
     }
 
     @PostMapping("/login")

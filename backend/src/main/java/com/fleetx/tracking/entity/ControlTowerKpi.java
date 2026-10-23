@@ -14,8 +14,11 @@ public class ControlTowerKpi {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "snapshot_date", nullable = false, unique = true)
+    @Column(name = "snapshot_date", nullable = false)
     private LocalDate snapshotDate;
+
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
 
     @Column(name = "active_vehicles", nullable = false)
     private Integer activeVehicles = 0;
@@ -55,4 +58,7 @@ public class ControlTowerKpi {
 
     public Instant getGeneratedAt() { return generatedAt; }
     public void setGeneratedAt(Instant generatedAt) { this.generatedAt = generatedAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

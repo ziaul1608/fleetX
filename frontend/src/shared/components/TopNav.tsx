@@ -41,6 +41,21 @@ export const TopNav: React.FC<TopNavProps> = () => {
 
       {/* Right Controls */}
       <div className="d-flex align-items-center gap-3">
+        {/* Multi-Tenant Workspace Badge */}
+        <div className="d-none d-md-flex align-items-center gap-2 px-2 py-1 bg-light rounded border small">
+          <span className="badge bg-primary-subtle text-primary fw-semibold" style={{ fontSize: '0.7rem' }}>
+            Tenant #{currentUser?.tenantId ?? 1}
+          </span>
+          <span className="fw-semibold text-slate-800" style={{ fontSize: '0.78rem' }}>
+            {currentUser?.companyName || 'FleetX Logistics'}
+          </span>
+          {currentUser?.warehouseName && (
+            <span className="text-muted" style={{ fontSize: '0.72rem' }}>
+              &bull; {currentUser.warehouseName}
+            </span>
+          )}
+        </div>
+
         {/* System Status Pill */}
         <div className="d-none d-sm-flex align-items-center gap-2 px-2 py-1 bg-light rounded border text-muted small">
           <span className="d-inline-block rounded-circle bg-success" style={{ width: '8px', height: '8px' }}></span>

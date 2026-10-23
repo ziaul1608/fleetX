@@ -6,6 +6,7 @@ import com.fleetx.fleet.entity.FuelRecord;
 import com.fleetx.fleet.entity.Vehicle;
 import com.fleetx.fleet.repository.FuelRecordRepository;
 import com.fleetx.fleet.repository.VehicleRepository;
+import com.fleetx.shared.context.TenantSecurityContext;
 import com.fleetx.shared.exception.DomainException;
 import com.fleetx.shared.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
@@ -54,7 +55,8 @@ public class FuelService {
      */
     @Transactional
     public FuelRecordResponseDto recordFueling(Long vehicleId, FuelRecordCreateRequest request) {
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Vehicle vehicle = vehicleRepository.findByIdAndTenantId(vehicleId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", vehicleId));
 
         if (!Boolean.TRUE.equals(vehicle.getActive())) {
@@ -126,6 +128,7 @@ public class FuelService {
                 fuelDate
         );
         record.setEfficiencyKmPerLiter(efficiency);
+        record.setTenantId(tenantId);
 
         FuelRecord saved = fuelRepository.save(record);
 
@@ -143,10 +146,13 @@ public class FuelService {
 
     @Transactional(readOnly = true)
     public Page<FuelRecordResponseDto> getRecordsByVehicle(Long vehicleId, Pageable pageable) {
+        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
         if (!vehicleRepository.existsById(vehicleId)) {
             throw new ResourceNotFoundException("Vehicle", vehicleId);
         }
-        return fuelRepository.findByVehicleIdOrderByFuelDateDesc(vehicleId, pageable)
+        Vehicle vehicle = vehicleRepository.findByIdAndTenantId(vehicleId, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", vehicleId));
+        return fuelRepository.findByVehicleIdOrderByFuelDateDesc(vehicle.getId(), pageable)
                 .map(this::mapToDto);
     }
 

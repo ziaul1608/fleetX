@@ -11,4 +11,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<AuditLog> findByActionOrderByCreatedAtDesc(String action, Pageable pageable);
     Page<AuditLog> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
+    Page<AuditLog> findByTenantIdOrderByCreatedAtDesc(Long tenantId, Pageable pageable);
+    Page<AuditLog> findByTenantIdAndActionOrderByCreatedAtDesc(Long tenantId, String action, Pageable pageable);
+    Page<AuditLog> findByTenantIdAndUserIdOrderByCreatedAtDesc(Long tenantId, Long userId, Pageable pageable);
 }

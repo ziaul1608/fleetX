@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { UserDto } from '../../features/auth/types';
+import { UserDto, VerifySignupOtpRequest } from '../../features/auth/types';
 import { authApi } from '../../features/auth/api/authApi';
 
 export interface AuthContextType {
@@ -8,8 +8,11 @@ export interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<UserDto>;
+  loginWithOtp?: (email: string, otp: string) => Promise<UserDto>;
+  signupWithOtp?: (payload: VerifySignupOtpRequest) => Promise<UserDto>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<UserDto | null>;
+  setCurrentUser?: (user: UserDto | null) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +56,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return loggedInUser;
   }, []);
 
+  const loginWithOtp = useCallback(async (email: string, otp: string): Promise<UserDto> => {
+    setError(null);
+    const loggedInUser = await authApi.verifyLoginOtp({ email, otp });
+    setCurrentUser(loggedInUser);
+    return loggedInUser;
+  }, []);
+
+  const signupWithOtp = useCallback(async (payload: VerifySignupOtpRequest): Promise<UserDto> => {
+    setError(null);
+    const onboardedUser = await authApi.verifySignupOtp(payload);
+    setCurrentUser(onboardedUser);
+    return onboardedUser;
+  }, []);
+
   const logout = useCallback(async (): Promise<void> => {
     try {
       await authApi.logout();
@@ -71,8 +88,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     error,
     login,
+    loginWithOtp,
+    signupWithOtp,
     logout,
     refreshUser,
+    setCurrentUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

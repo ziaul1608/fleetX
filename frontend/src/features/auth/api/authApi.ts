@@ -10,6 +10,11 @@ import {
   AuditLogDto,
   CsrfResponseData,
   RoleType,
+  SendSignupOtpRequest,
+  VerifySignupOtpRequest,
+  SendLoginOtpRequest,
+  VerifyLoginOtpRequest,
+  OtpSentResponse,
 } from '../types';
 
 export const authApi = {
@@ -27,6 +32,38 @@ export const authApi = {
       apiClient.defaults.headers.common['X-CSRF-TOKEN'] = data.token;
     }
     return data;
+  },
+
+  /**
+   * Request email verification code for new warehouse owner signup
+   */
+  async sendSignupOtp(payload: SendSignupOtpRequest): Promise<OtpSentResponse> {
+    const response = await apiClient.post<ApiResponse<OtpSentResponse>>('/api/v1/auth/otp/send-signup', payload);
+    return response.data.data;
+  },
+
+  /**
+   * Verify email verification code and provision new warehouse tenant + admin account
+   */
+  async verifySignupOtp(payload: VerifySignupOtpRequest): Promise<UserDto> {
+    const response = await apiClient.post<ApiResponse<UserDto>>('/api/v1/auth/otp/verify-signup', payload);
+    return response.data.data;
+  },
+
+  /**
+   * Request passwordless email login OTP challenge
+   */
+  async sendLoginOtp(payload: SendLoginOtpRequest): Promise<OtpSentResponse> {
+    const response = await apiClient.post<ApiResponse<OtpSentResponse>>('/api/v1/auth/otp/send-login', payload);
+    return response.data.data;
+  },
+
+  /**
+   * Verify passwordless login OTP and establish session
+   */
+  async verifyLoginOtp(payload: VerifyLoginOtpRequest): Promise<UserDto> {
+    const response = await apiClient.post<ApiResponse<UserDto>>('/api/v1/auth/otp/verify-login', payload);
+    return response.data.data;
   },
 
   /**

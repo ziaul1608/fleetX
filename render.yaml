@@ -48,3 +48,15 @@ services:
         sync: false
       - key: BOOTSTRAP_ADMIN_PASSWORD_OVERRIDE
         sync: false
+
+      # Optional SMTP Email Configuration (Passwordless OTP Delivery)
+      - key: SPRING_MAIL_HOST
+        sync: false
+      - key: SPRING_MAIL_PORT
+        sync: false
+      - key: SPRING_MAIL_USERNAME
+        sync: false
+      - key: SPRING_MAIL_PASSWORD
+        sync: false
+      - key: FLEETX_MAIL_FROM
+        sync: false

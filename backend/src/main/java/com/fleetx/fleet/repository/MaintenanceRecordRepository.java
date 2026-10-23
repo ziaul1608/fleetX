@@ -18,6 +18,8 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
 
     Page<MaintenanceRecord> findAllByOrderByServiceDateDesc(Pageable pageable);
 
+    Page<MaintenanceRecord> findByTenantIdOrderByServiceDateDesc(Long tenantId, Pageable pageable);
+
     Optional<MaintenanceRecord> findTopByVehicleIdAndNextServiceDueKmIsNotNullOrderByServiceDateDesc(Long vehicleId);
 
     Optional<MaintenanceRecord> findTopByVehicleIdAndNextServiceDueDateIsNotNullOrderByServiceDateDesc(Long vehicleId);

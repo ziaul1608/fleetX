@@ -20,11 +20,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findByRoles_Name(String roleName, Pageable pageable);
 
-    @Query("SELECT u FROM User u WHERE " +
+    Optional<User> findByIdAndTenantId(Long id, Long tenantId);
+    Optional<User> findByEmailAndTenantId(String email, Long tenantId);
+
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE u.tenantId = :tenantId AND r.name = :roleName AND u.active = true")
+    long countActiveUsersWithRoleAndTenantId(@Param("roleName") String roleName, @Param("tenantId") Long tenantId);
+
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND " +
            "(:role IS NULL OR EXISTS (SELECT r FROM u.roles r WHERE r.name = :role)) AND " +
            "(:active IS NULL OR u.active = :active) AND " +
            "(:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<User> findWithFilters(
+    Page<User> findWithFiltersByTenant(
+            @Param("tenantId") Long tenantId,
             @Param("role") String role,
             @Param("active") Boolean active,
             @Param("search") String search,

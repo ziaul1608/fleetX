@@ -67,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
 
       {/* Navigation Groups */}
       <div className="py-2 overflow-y-auto flex-grow-1">
-        <NavLink to="/" end className={({ isActive }) => `fx-nav-item ${isActive ? 'active' : ''}`}>
+        <NavLink to="/dashboard" className={({ isActive }) => `fx-nav-item ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={18} className="icon" />
           <span className="label">Control Tower</span>
         </NavLink>

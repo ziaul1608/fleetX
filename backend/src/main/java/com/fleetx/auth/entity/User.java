@@ -13,10 +13,13 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
+
     @Column(nullable = false, unique = true, length = 180)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(name = "full_name", nullable = false, length = 120)
@@ -42,6 +45,14 @@ public class User {
     public User() {}
 
     public User(String email, String passwordHash, String fullName) {
+        this.tenantId = 1L;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.fullName = fullName;
+    }
+
+    public User(Long tenantId, String email, String passwordHash, String fullName) {
+        this.tenantId = tenantId;
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
@@ -54,6 +65,9 @@ public class User {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

@@ -14,6 +14,9 @@ public class ShipmentTimelineEvent {
     @Column(name = "shipment_id", nullable = false)
     private Long shipmentId;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
+
     @Column(name = "event_type", nullable = false, length = 50)
     private String eventType;
 
@@ -60,4 +63,7 @@ public class ShipmentTimelineEvent {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

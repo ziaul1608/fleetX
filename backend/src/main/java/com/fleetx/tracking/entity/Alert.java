@@ -14,6 +14,9 @@ public class Alert {
     @Column(name = "alert_type", nullable = false, length = 50)
     private String alertType;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
+
     @Column(nullable = false, length = 20)
     private String severity = "WARNING";
 
@@ -81,4 +84,7 @@ public class Alert {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

@@ -10,11 +10,19 @@ import java.util.Optional;
 @Repository
 public interface GeofenceRepository extends JpaRepository<Geofence, Long> {
 
-    List<Geofence> findByActiveTrueOrderByIdAsc();
+    Optional<Geofence> findByIdAndTenantId(Long id, Long tenantId);
+
+    List<Geofence> findByTenantIdAndActiveTrueOrderByIdAsc(Long tenantId);
+
+    List<Geofence> findByTenantIdOrderByIdAsc(Long tenantId);
+
+    Optional<Geofence> findByTenantIdAndNameIgnoreCase(Long tenantId, String name);
+
+    boolean existsByTenantIdAndNameIgnoreCase(Long tenantId, String name);
+
+    boolean existsByNameIgnoreCase(String name);
 
     List<Geofence> findAllByOrderByIdAsc();
 
-    Optional<Geofence> findByNameIgnoreCase(String name);
-
-    boolean existsByNameIgnoreCase(String name);
+    List<Geofence> findByActiveTrueOrderByIdAsc();
 }

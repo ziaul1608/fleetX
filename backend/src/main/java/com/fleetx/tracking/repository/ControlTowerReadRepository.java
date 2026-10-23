@@ -1,5 +1,6 @@
 package com.fleetx.tracking.repository;
 
+import com.fleetx.shared.context.TenantSecurityContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -23,44 +24,51 @@ public class ControlTowerReadRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    private Long currentTenant() {
+        return TenantSecurityContext.getOptionalTenantId().orElse(1L);
+    }
+
     public Map<String, Long> countVehiclesByStatus() {
         Map<String, Long> result = new LinkedHashMap<>();
         jdbcTemplate.query(
-                "SELECT UPPER(status) AS st, COUNT(*) AS cnt FROM vehicles WHERE active = TRUE GROUP BY UPPER(status)",
+                "SELECT UPPER(status) AS st, COUNT(*) AS cnt FROM vehicles WHERE active = TRUE AND tenant_id = ? GROUP BY UPPER(status)",
                 rs -> {
                     result.put(rs.getString("st"), rs.getLong("cnt"));
-                }
+                },
+                currentTenant()
         );
         return result;
     }
 
     public long countTotalVehicles() {
-        Long cnt = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM vehicles", Long.class);
+        Long cnt = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM vehicles WHERE tenant_id = ?", Long.class, currentTenant());
         return cnt != null ? cnt : 0L;
     }
 
     public long countInactiveVehicles() {
-        Long cnt = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM vehicles WHERE active = FALSE", Long.class);
+        Long cnt = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM vehicles WHERE active = FALSE AND tenant_id = ?", Long.class, currentTenant());
         return cnt != null ? cnt : 0L;
     }
 
     public Map<String, Long> countTripsByStatus() {
         Map<String, Long> result = new LinkedHashMap<>();
         jdbcTemplate.query(
-                "SELECT UPPER(status) AS st, COUNT(*) AS cnt FROM trips GROUP BY UPPER(status)",
+                "SELECT UPPER(status) AS st, COUNT(*) AS cnt FROM trips WHERE tenant_id = ? GROUP BY UPPER(status)",
                 rs -> {
                     result.put(rs.getString("st"), rs.getLong("cnt"));
-                }
+                },
+                currentTenant()
         );
         return result;
     }
 
     public long countTripsCompletedSince(Instant since) {
         Long cnt = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM trips WHERE UPPER(status) = 'COMPLETED' AND (actual_end_time >= ? OR created_at >= ?)",
+                "SELECT COUNT(*) FROM trips WHERE UPPER(status) = 'COMPLETED' AND (actual_end_time >= ? OR created_at >= ?) AND tenant_id = ?",
                 Long.class,
                 Timestamp.from(since),
-                Timestamp.from(since)
+                Timestamp.from(since),
+                currentTenant()
         );
         return cnt != null ? cnt : 0L;
     }
@@ -68,42 +76,47 @@ public class ControlTowerReadRepository {
     public Map<String, Long> countShipmentsByStatus() {
         Map<String, Long> result = new LinkedHashMap<>();
         jdbcTemplate.query(
-                "SELECT UPPER(status) AS st, COUNT(*) AS cnt FROM shipments GROUP BY UPPER(status)",
+                "SELECT UPPER(status) AS st, COUNT(*) AS cnt FROM shipments WHERE tenant_id = ? GROUP BY UPPER(status)",
                 rs -> {
                     result.put(rs.getString("st"), rs.getLong("cnt"));
-                }
+                },
+                currentTenant()
         );
         return result;
     }
 
     public Double getAverageFuelEfficiency() {
         Double avg = jdbcTemplate.queryForObject(
-                "SELECT AVG(efficiency_km_per_liter) FROM fuel_records WHERE efficiency_km_per_liter IS NOT NULL AND efficiency_km_per_liter > 0",
-                Double.class
+                "SELECT AVG(efficiency_km_per_liter) FROM fuel_records WHERE efficiency_km_per_liter IS NOT NULL AND efficiency_km_per_liter > 0 AND tenant_id = ?",
+                Double.class,
+                currentTenant()
         );
         return avg != null ? Math.round(avg * 100.0) / 100.0 : 0.0;
     }
 
     public Double getTotalFuelCost() {
         Double sum = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(total_cost), 0) FROM fuel_records",
-                Double.class
+                "SELECT COALESCE(SUM(total_cost), 0) FROM fuel_records WHERE tenant_id = ?",
+                Double.class,
+                currentTenant()
         );
         return sum != null ? Math.round(sum * 100.0) / 100.0 : 0.0;
     }
 
     public Double getTotalMaintenanceCost() {
         Double sum = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(cost), 0) FROM maintenance_records",
-                Double.class
+                "SELECT COALESCE(SUM(cost), 0) FROM maintenance_records WHERE tenant_id = ?",
+                Double.class,
+                currentTenant()
         );
         return sum != null ? Math.round(sum * 100.0) / 100.0 : 0.0;
     }
 
     public long countUnresolvedMaintenanceWarnings() {
         Long cnt = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM service_warnings WHERE resolved = FALSE",
-                Long.class
+                "SELECT COUNT(*) FROM service_warnings WHERE resolved = FALSE AND tenant_id = ?",
+                Long.class,
+                currentTenant()
         );
         return cnt != null ? cnt : 0L;
     }
@@ -116,7 +129,7 @@ public class ControlTowerReadRepository {
                 SELECT sw.waypoint_name, sw.latitude, sw.longitude, sw.sequence_order, sw.stop_type
                 FROM shipment_waypoints sw
                 INNER JOIN shipments s ON sw.shipment_id = s.id
-                WHERE s.trip_id = ?
+                WHERE s.trip_id = ? AND s.tenant_id = ?
                 ORDER BY s.id ASC, sw.sequence_order ASC
                 """;
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -127,7 +140,7 @@ public class ControlTowerReadRepository {
             map.put("sequenceOrder", rs.getInt("sequence_order"));
             map.put("stopType", rs.getString("stop_type"));
             return map;
-        }, tripId);
+        }, tripId, currentTenant());
     }
 
     public Optional<Long> findActiveTripIdForVehicle(Long vehicleId) {
@@ -135,9 +148,10 @@ public class ControlTowerReadRepository {
             return Optional.empty();
         }
         List<Long> ids = jdbcTemplate.query(
-                "SELECT id FROM trips WHERE vehicle_id = ? AND UPPER(status) IN ('IN_PROGRESS', 'IN_TRANSIT', 'ASSIGNED', 'PLANNED') ORDER BY id DESC",
+                "SELECT id FROM trips WHERE vehicle_id = ? AND tenant_id = ? AND UPPER(status) IN ('IN_PROGRESS', 'IN_TRANSIT', 'ASSIGNED', 'PLANNED') ORDER BY id DESC",
                 (rs, rowNum) -> rs.getLong("id"),
-                vehicleId
+                vehicleId,
+                currentTenant()
         );
         return ids.stream().findFirst();
     }
@@ -146,6 +160,7 @@ public class ControlTowerReadRepository {
         String sql = """
                 SELECT v.id, v.license_plate, v.make, v.model, v.vehicle_type, v.status, v.odometer_km, v.active
                 FROM vehicles v
+                WHERE v.tenant_id = ?
                 ORDER BY v.id ASC
                 """;
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -159,7 +174,7 @@ public class ControlTowerReadRepository {
             m.put("odometerKm", rs.getDouble("odometer_km"));
             m.put("active", rs.getBoolean("active"));
             return m;
-        });
+        }, currentTenant());
     }
 
     // --- Report Queries with Optional Date & Status Filtering ---
@@ -172,9 +187,10 @@ public class ControlTowerReadRepository {
                 FROM trips t
                 LEFT JOIN vehicles v ON t.vehicle_id = v.id
                 LEFT JOIN drivers d ON t.driver_id = d.id
-                WHERE 1=1
+                WHERE t.tenant_id = ?
                 """);
         List<Object> params = new ArrayList<>();
+        params.add(currentTenant());
         appendDateRange(sql, params, "t.created_at", startDate, endDate);
         if (status != null && !status.isBlank()) {
             sql.append(" AND UPPER(t.status) = UPPER(?)");
@@ -203,9 +219,10 @@ public class ControlTowerReadRepository {
                        s.sender_address AS origin_city, s.receiver_address AS destination_city, s.weight_kg, s.status,
                        COALESCE(s.estimated_distance_km, 0.0) AS estimated_distance_km, s.created_at
                 FROM shipments s
-                WHERE 1=1
+                WHERE s.tenant_id = ?
                 """);
         List<Object> params = new ArrayList<>();
+        params.add(currentTenant());
         appendDateRange(sql, params, "s.created_at", startDate, endDate);
         if (status != null && !status.isBlank()) {
             sql.append(" AND UPPER(s.status) = UPPER(?)");
@@ -236,9 +253,10 @@ public class ControlTowerReadRepository {
                        f.efficiency_km_per_liter, f.fuel_station, f.fuel_date
                 FROM fuel_records f
                 LEFT JOIN vehicles v ON f.vehicle_id = v.id
-                WHERE 1=1
+                WHERE f.tenant_id = ?
                 """);
         List<Object> params = new ArrayList<>();
+        params.add(currentTenant());
         appendDateRange(sql, params, "f.fuel_date", startDate, endDate);
         if (status != null && !status.isBlank()) {
             sql.append(" AND UPPER(v.status) = UPPER(?)");
@@ -268,9 +286,10 @@ public class ControlTowerReadRepository {
                        m.cost, m.odometer_at_service, m.service_date, m.description
                 FROM maintenance_records m
                 LEFT JOIN vehicles v ON m.vehicle_id = v.id
-                WHERE 1=1
+                WHERE m.tenant_id = ?
                 """);
         List<Object> params = new ArrayList<>();
+        params.add(currentTenant());
         if (startDate != null) {
             sql.append(" AND m.service_date >= ?");
             params.add(java.sql.Date.valueOf(startDate));
@@ -305,9 +324,10 @@ public class ControlTowerReadRepository {
                 SELECT a.id, a.alert_type, a.severity, a.entity_type, a.entity_id,
                        a.message, a.acknowledged, a.created_at
                 FROM alerts a
-                WHERE 1=1
+                WHERE a.tenant_id = ?
                 """);
         List<Object> params = new ArrayList<>();
+        params.add(currentTenant());
         appendDateRange(sql, params, "a.created_at", startDate, endDate);
         if (status != null && !status.isBlank()) {
             if ("ACKNOWLEDGED".equalsIgnoreCase(status.trim())) {
@@ -342,9 +362,10 @@ public class ControlTowerReadRepository {
                 SELECT v.id, v.vin, v.license_plate, v.make, v.model, v.model_year,
                        v.vehicle_type, v.fuel_type, v.odometer_km, v.status, v.created_at
                 FROM vehicles v
-                WHERE 1=1
+                WHERE v.tenant_id = ?
                 """);
         List<Object> params = new ArrayList<>();
+        params.add(currentTenant());
         appendDateRange(sql, params, "v.created_at", startDate, endDate);
         if (status != null && !status.isBlank()) {
             sql.append(" AND UPPER(v.status) = UPPER(?)");

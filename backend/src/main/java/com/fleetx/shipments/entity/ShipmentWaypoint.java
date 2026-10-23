@@ -15,6 +15,9 @@ public class ShipmentWaypoint {
     @Column(name = "shipment_id", nullable = false)
     private Long shipmentId;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
+
     @Column(name = "waypoint_name", nullable = false, length = 120)
     private String waypointName;
 
@@ -69,4 +72,7 @@ public class ShipmentWaypoint {
 
     public Instant getEstimatedArrival() { return estimatedArrival; }
     public void setEstimatedArrival(Instant estimatedArrival) { this.estimatedArrival = estimatedArrival; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

@@ -17,6 +17,9 @@ public class GeofenceVehicleState {
     @Column(name = "vehicle_id", nullable = false)
     private Long vehicleId;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
+
     @Column(nullable = false)
     private Boolean inside;
 
@@ -39,4 +42,7 @@ public class GeofenceVehicleState {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

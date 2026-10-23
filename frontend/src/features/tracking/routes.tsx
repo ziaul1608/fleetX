@@ -10,6 +10,10 @@ export const trackingRoutes: RouteObject[] = [
     element: <ControlTowerPage />,
   },
   {
+    path: 'dashboard',
+    element: <ControlTowerPage />,
+  },
+  {
     path: 'tracking/map',
     element: <ControlTowerPage />,
   },

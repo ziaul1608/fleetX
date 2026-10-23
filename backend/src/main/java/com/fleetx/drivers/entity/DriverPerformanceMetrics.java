@@ -15,6 +15,9 @@ public class DriverPerformanceMetrics {
     @Column(name = "driver_id", nullable = false, unique = true)
     private Long driverId;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
+
     @Column(name = "total_trips_completed", nullable = false)
     private Integer totalTripsCompleted = 0;
 
@@ -75,4 +78,7 @@ public class DriverPerformanceMetrics {
 
     public Instant getLastCalculatedAt() { return lastCalculatedAt; }
     public void setLastCalculatedAt(Instant lastCalculatedAt) { this.lastCalculatedAt = lastCalculatedAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

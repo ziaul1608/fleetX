@@ -8,6 +8,7 @@ import com.fleetx.drivers.entity.DriverAvailability;
 import com.fleetx.drivers.entity.DriverPerformanceMetrics;
 import com.fleetx.drivers.repository.DriverPerformanceMetricsRepository;
 import com.fleetx.drivers.repository.DriverRepository;
+import com.fleetx.shared.context.TenantSecurityContext;
 import com.fleetx.shared.contract.AlertPublisher;
 import com.fleetx.shared.contract.DriverLookupService;
 import com.fleetx.shared.dto.DriverSummaryDto;
@@ -44,14 +45,16 @@ public class DriverService implements DriverLookupService {
 
     @Transactional(readOnly = true)
     public List<DriverResponseDto> findAllDrivers() {
-        return driverRepository.findAll().stream()
+        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        return driverRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public PageResponse<DriverResponseDto> searchDrivers(String search, String availability, Boolean active, Pageable pageable) {
-        Page<Driver> page = driverRepository.findWithFilters(search, availability, active, pageable);
+        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Page<Driver> page = driverRepository.findWithFilters(tenantId, search, availability, active, pageable);
         List<DriverResponseDto> content = page.getContent().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -68,15 +71,17 @@ public class DriverService implements DriverLookupService {
 
     @Transactional(readOnly = true)
     public DriverResponseDto getDriverById(Long id) {
-        Driver driver = driverRepository.findById(id)
+        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Driver driver = driverRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver", id));
         return mapToDto(driver);
     }
 
     @Transactional
     public DriverResponseDto createDriver(DriverCreateRequest request) {
+        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
         String cleanLicense = request.licenseNumber().trim().toUpperCase();
-        if (driverRepository.existsByLicenseNumber(cleanLicense)) {
+        if (driverRepository.existsByTenantIdAndLicenseNumber(tenantId, cleanLicense)) {
             throw new DomainException("A driver with license number '" + cleanLicense + "' already exists.",
                     HttpStatus.CONFLICT, "RESOURCE_CONFLICT");
         }
@@ -87,6 +92,7 @@ public class DriverService implements DriverLookupService {
         }
 
         Driver driver = new Driver();
+        driver.setTenantId(tenantId);
         driver.setUserId(request.userId());
         driver.setFullName(request.fullName().trim());
         driver.setPhoneNumber(request.phoneNumber().trim());
@@ -110,6 +116,7 @@ public class DriverService implements DriverLookupService {
 
         // Initialize driver performance metrics
         DriverPerformanceMetrics metrics = new DriverPerformanceMetrics(saved.getId());
+        metrics.setTenantId(tenantId);
         metricsRepository.save(metrics);
 
         // Check if license is expiring soon (within 30 days) and trigger alert
@@ -129,7 +136,8 @@ public class DriverService implements DriverLookupService {
 
     @Transactional
     public DriverResponseDto updateDriver(Long id, DriverUpdateRequest request) {
-        Driver driver = driverRepository.findById(id)
+        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Driver driver = driverRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver", id));
 
         driver.setFullName(request.fullName().trim());
@@ -165,7 +173,8 @@ public class DriverService implements DriverLookupService {
 
     @Transactional
     public DriverResponseDto updateDriverAvailability(Long id, String status) {
-        Driver driver = driverRepository.findById(id)
+        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Driver driver = driverRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver", id));
 
         DriverAvailability avail = DriverAvailability.fromString(status);
@@ -179,7 +188,9 @@ public class DriverService implements DriverLookupService {
     @Override
     @Transactional(readOnly = true)
     public Optional<DriverSummaryDto> findDriverSummaryById(Long driverId) {
+        Optional<Long> optionalTenantId = TenantSecurityContext.getOptionalTenantId();
         return driverRepository.findById(driverId)
+                .filter(d -> optionalTenantId.isEmpty() || d.getTenantId().equals(optionalTenantId.get()))
                 .map(d -> new DriverSummaryDto(
                         d.getId(),
                         d.getUserId(),
@@ -193,7 +204,9 @@ public class DriverService implements DriverLookupService {
     @Override
     @Transactional(readOnly = true)
     public boolean isDriverEligibleForTrip(Long driverId) {
+        Optional<Long> optionalTenantId = TenantSecurityContext.getOptionalTenantId();
         return driverRepository.findById(driverId)
+                .filter(d -> optionalTenantId.isEmpty() || d.getTenantId().equals(optionalTenantId.get()))
                 .map(d -> Boolean.TRUE.equals(d.getActive())
                         && "AVAILABLE".equalsIgnoreCase(d.getAvailabilityStatus())
                         && d.getLicenseExpiryDate() != null
@@ -205,10 +218,13 @@ public class DriverService implements DriverLookupService {
     @Override
     @Transactional
     public void setDriverAvailability(Long driverId, String status) {
+        Optional<Long> optionalTenantId = TenantSecurityContext.getOptionalTenantId();
         driverRepository.findById(driverId).ifPresent(d -> {
-            DriverAvailability avail = DriverAvailability.fromString(status);
-            d.setAvailabilityStatus(avail.name());
-            driverRepository.save(d);
+            if (optionalTenantId.isEmpty() || d.getTenantId().equals(optionalTenantId.get())) {
+                DriverAvailability avail = DriverAvailability.fromString(status);
+                d.setAvailabilityStatus(avail.name());
+                driverRepository.save(d);
+            }
         });
     }
 

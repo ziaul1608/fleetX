@@ -16,6 +16,9 @@ public class Geofence {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId = 1L;
+
     @JdbcTypeCode(SqlTypes.DECIMAL)
     @Column(name = "center_latitude", nullable = false)
     private Double centerLatitude;
@@ -81,4 +84,7 @@ public class Geofence {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }
