@@ -18,7 +18,6 @@ import {
   Activity,
   FileText,
   Lock,
-  ChevronRight,
   Gauge,
   Sparkles,
 } from 'lucide-react';

@@ -10,7 +10,6 @@ import {
   ArrowRight,
   ArrowLeft,
   KeyRound,
-  Sparkles,
 } from 'lucide-react';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../../../shared/context/AuthContext';
