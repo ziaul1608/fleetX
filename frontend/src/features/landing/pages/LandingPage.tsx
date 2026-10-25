@@ -12,6 +12,12 @@ import {
   MapPin,
   Cpu,
   MailCheck,
+  Users,
+  Compass,
+  Package,
+  Activity,
+  FileText,
+  Lock,
 } from 'lucide-react';
 import { AuthContext } from '../../../shared/context/AuthContext';
 
@@ -23,7 +29,7 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="min-vh-100 d-flex flex-column bg-white text-slate-900" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Top Navigation */}
-      <header className="border-bottom sticky-top bg-white bg-opacity-95 backdrop-blur shadow-sm">
+      <header className="border-bottom sticky-top bg-white bg-opacity-95 backdrop-blur shadow-sm" style={{ zIndex: 1020 }}>
         <div className="container py-3 d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-2">
             <div className="bg-primary text-white p-2 rounded d-flex align-items-center justify-content-center shadow-sm">
@@ -37,16 +43,16 @@ export const LandingPage: React.FC = () => {
 
           <nav className="d-none d-md-flex align-items-center gap-4 text-secondary small fw-medium">
             <a href="#features" className="text-decoration-none text-secondary hover-primary">
-              Capabilities
+              Features
+            </a>
+            <a href="#modules" className="text-decoration-none text-secondary hover-primary">
+              Platform
             </a>
             <a href="#how-it-works" className="text-decoration-none text-secondary hover-primary">
-              Onboarding
+              How It Works
             </a>
             <a href="#security" className="text-decoration-none text-secondary hover-primary">
               Security
-            </a>
-            <a href="#modules" className="text-decoration-none text-secondary hover-primary">
-              Modules
             </a>
           </nav>
 
@@ -62,7 +68,7 @@ export const LandingPage: React.FC = () => {
                   Sign In
                 </Link>
                 <Link to="/signup" className="btn btn-primary btn-sm px-3 py-2 fw-semibold d-flex align-items-center gap-1">
-                  <span>Launch Free</span>
+                  <span>Get Started</span>
                   <ArrowRight size={14} />
                 </Link>
               </>
@@ -75,17 +81,18 @@ export const LandingPage: React.FC = () => {
       <section className="py-5 bg-gradient-to-b from-blue-50 to-white" style={{ background: 'linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%)' }}>
         <div className="container py-4 text-center">
           <div className="d-inline-flex align-items-center gap-2 px-3 py-1 bg-white border rounded-pill shadow-sm mb-4">
-            <span className="badge bg-primary rounded-pill px-2 py-1 small">New</span>
+            <span className="badge bg-primary rounded-pill px-2 py-1 small">Intelligent Multi-Tenant Fleet &amp; Logistics Operating System</span>
             <span className="small text-secondary fw-medium">
               Multi-Tenant Architecture &amp; Passwordless Email OTP Access
             </span>
           </div>
 
           <h1 className="display-4 fw-extrabold text-slate-900 mb-3 mx-auto" style={{ maxWidth: '850px', letterSpacing: '-0.02em', fontWeight: 800 }}>
-            Intelligent Multi-Tenant Fleet &amp; Logistics Operating System
+            One Control Tower. Your Entire Fleet.
           </h1>
 
-          <p className="lead text-muted mx-auto mb-4" style={{ maxWidth: '700px', fontSize: '1.15rem' }}>
+          <p className="lead text-muted mx-auto mb-4" style={{ maxWidth: '750px', fontSize: '1.2rem', lineHeight: '1.6' }}>
+            Manage vehicles, drivers, trips, shipments and fleet operations from one secure workspace.
             Empower your warehouse operations with dedicated private workspaces, real-time GPS telemetry simulations, automated geofence boundary enforcement, and end-to-end trip manifest dispatch.
           </p>
 
@@ -97,12 +104,12 @@ export const LandingPage: React.FC = () => {
               </Link>
             ) : (
               <>
-                <Link to="/signup" className="btn btn-primary btn-lg px-4 py-2 fw-bold d-flex align-items-center gap-2 shadow">
-                  <span>Register Private Warehouse</span>
+                <Link to="/signup" className="btn btn-primary btn-lg px-4 py-2 fw-bold d-flex align-items-center gap-2 shadow" aria-label="Register Private Warehouse">
+                  <span>Get Started — Register Private Warehouse</span>
                   <ArrowRight size={18} />
                 </Link>
-                <Link to="/login" className="btn btn-outline-dark btn-lg px-4 py-2 fw-semibold">
-                  Sign In with Email OTP
+                <Link to="/login" className="btn btn-outline-dark btn-lg px-4 py-2 fw-semibold" aria-label="Sign In with Email OTP">
+                  <span>Sign In with Email OTP</span>
                 </Link>
               </>
             )}
@@ -194,6 +201,141 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* 5 PLATFORM MODULES SHOWCASE */}
+      <section id="modules" className="py-5 bg-white border-top">
+        <div className="container py-4">
+          <div className="text-center mb-5">
+            <span className="badge bg-primary-subtle text-primary fw-semibold px-3 py-1 rounded-pill mb-2">Integrated Platform</span>
+            <h2 className="fw-bold text-slate-900 mb-2">5 Core Modules. One Unified Operating System.</h2>
+            <p className="text-muted mx-auto" style={{ maxWidth: '650px' }}>
+              Everything your warehouse and logistics teams need to manage operations from receipt to final customer delivery.
+            </p>
+          </div>
+
+          <div className="row g-4">
+            {/* Module 1: Identity & Admin */}
+            <div className="col-lg-4 col-md-6">
+              <div className="card h-100 p-4 border shadow-sm rounded-3 bg-light hover-shadow transition">
+                <div className="p-3 bg-primary bg-opacity-10 text-primary rounded-3 d-inline-flex mb-3 align-self-start">
+                  <Users size={24} />
+                </div>
+                <h5 className="fw-bold mb-2">1. Identity &amp; Admin</h5>
+                <p className="text-muted small mb-3">
+                  Multi-tenant workspace isolation with role-based access control (Admin, Dispatcher, Safety Officer, Driver, Analyst) and immutable audit trail logs.
+                </p>
+                <ul className="list-unstyled small text-secondary mt-auto mb-0 d-flex flex-column gap-1">
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-primary" /> Tenant-scoped user management
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-primary" /> Cryptographic session enforcement
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-primary" /> Immutable security audit log
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Module 2: Fleet & Asset Management */}
+            <div className="col-lg-4 col-md-6">
+              <div className="card h-100 p-4 border shadow-sm rounded-3 bg-light hover-shadow transition">
+                <div className="p-3 bg-success bg-opacity-10 text-success rounded-3 d-inline-flex mb-3 align-self-start">
+                  <Truck size={24} />
+                </div>
+                <h5 className="fw-bold mb-2">2. Fleet &amp; Asset Management</h5>
+                <p className="text-muted small mb-3">
+                  Complete vehicle inventory tracking, inspection checklists, fuel logs, automated maintenance reminders, and dispatch readiness verification.
+                </p>
+                <ul className="list-unstyled small text-secondary mt-auto mb-0 d-flex flex-column gap-1">
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-success" /> VIN &amp; plate collision checks
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-success" /> Proactive maintenance scheduling
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-success" /> Fuel efficiency telemetry tracking
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Module 3: Driver & Trip Operations */}
+            <div className="col-lg-4 col-md-6">
+              <div className="card h-100 p-4 border shadow-sm rounded-3 bg-light hover-shadow transition">
+                <div className="p-3 bg-info bg-opacity-10 text-info rounded-3 d-inline-flex mb-3 align-self-start">
+                  <Compass size={24} />
+                </div>
+                <h5 className="fw-bold mb-2">3. Driver &amp; Trip Operations</h5>
+                <p className="text-muted small mb-3">
+                  Certified driver management, license validity enforcement, trip creation and dispatching, route status transitions, and safety metrics.
+                </p>
+                <ul className="list-unstyled small text-secondary mt-auto mb-0 d-flex flex-column gap-1">
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-info" /> Driver qualification validation
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-info" /> Trip manifest dispatch workflow
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-info" /> Real-time status lifecycle tracking
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Module 4: Shipment & Route Management */}
+            <div className="col-lg-6 col-md-6">
+              <div className="card h-100 p-4 border shadow-sm rounded-3 bg-light hover-shadow transition">
+                <div className="p-3 bg-warning bg-opacity-10 text-warning rounded-3 d-inline-flex mb-3 align-self-start">
+                  <Package size={24} />
+                </div>
+                <h5 className="fw-bold mb-2">4. Shipment &amp; Route Management</h5>
+                <p className="text-muted small mb-3">
+                  Shipment manifests, multi-stop route sequencing, delivery progress checkpoints, and automated delay detection algorithms.
+                </p>
+                <ul className="list-unstyled small text-secondary mt-auto mb-0 d-flex flex-column gap-1">
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-warning" /> Cargo allocation and weight monitoring
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-warning" /> Waypoint checkpoint tracking
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-warning" /> Automated route delay escalation
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Module 5: Tracking & Control Tower */}
+            <div className="col-lg-6 col-md-12">
+              <div className="card h-100 p-4 border shadow-sm rounded-3 bg-light hover-shadow transition">
+                <div className="p-3 bg-danger bg-opacity-10 text-danger rounded-3 d-inline-flex mb-3 align-self-start">
+                  <Activity size={24} />
+                </div>
+                <h5 className="fw-bold mb-2">5. Tracking &amp; Control Tower</h5>
+                <p className="text-muted small mb-3">
+                  Real-time live map telemetry, circular depot &amp; polygonal transit corridor geofences, automated overspeed detection, and instantaneous alert acknowledgement.
+                </p>
+                <ul className="list-unstyled small text-secondary mt-auto mb-0 d-flex flex-column gap-1">
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-danger" /> Live interactive map with route simulation
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-danger" /> Polygonal &amp; circular geofence boundary alerts
+                  </li>
+                  <li className="d-flex align-items-center gap-2">
+                    <CheckCircle2 size={13} className="text-danger" /> Sanitized CSV operational report exports
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Core SaaS Capabilities */}
       <section id="features" className="py-5 bg-light border-top border-bottom">
         <div className="container py-4">
@@ -280,48 +422,60 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* How it Works / Onboarding Guide */}
+      {/* How it Works / 4-Step Onboarding Guide */}
       <section id="how-it-works" className="py-5 bg-white">
         <div className="container py-4">
           <div className="text-center mb-5">
-            <span className="badge bg-primary-subtle text-primary fw-semibold px-3 py-1 rounded-pill mb-2">Simple 3-Step Launch</span>
+            <span className="badge bg-primary-subtle text-primary fw-semibold px-3 py-1 rounded-pill mb-2">Streamlined Workflow</span>
             <h2 className="fw-bold text-slate-900">How to Onboard Your Warehouse</h2>
-            <p className="text-muted">Start managing private logistics in less than two minutes.</p>
+            <p className="text-muted">Four simple steps to full operational visibility.</p>
           </div>
 
           <div className="row g-4 text-center">
-            <div className="col-md-4">
+            <div className="col-md-3 col-6">
               <div className="p-4 border rounded-3 h-100 bg-light shadow-sm">
                 <div className="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle fw-bold fs-5 mb-3" style={{ width: '48px', height: '48px' }}>
                   1
                 </div>
-                <h5 className="fw-bold mb-2">Register Warehouse</h5>
+                <h5 className="fw-bold mb-2">Create Workspace</h5>
                 <p className="text-muted small">
-                  Provide your organization name, warehouse depot title, and work email address on the secure signup portal.
+                  Register your company and warehouse depot name with work email verification.
                 </p>
               </div>
             </div>
 
-            <div className="col-md-4">
+            <div className="col-md-3 col-6">
               <div className="p-4 border rounded-3 h-100 bg-light shadow-sm">
                 <div className="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle fw-bold fs-5 mb-3" style={{ width: '48px', height: '48px' }}>
                   2
                 </div>
-                <h5 className="fw-bold mb-2">Verify via Email OTP</h5>
+                <h5 className="fw-bold mb-2">Add Your Fleet</h5>
                 <p className="text-muted small">
-                  Receive a cryptographically secure 6-digit verification code. Verify within 5 minutes with zero password hassle.
+                  Register vehicles with VIN &amp; plate numbers, and enroll licensed drivers.
                 </p>
               </div>
             </div>
 
-            <div className="col-md-4">
+            <div className="col-md-3 col-6">
               <div className="p-4 border rounded-3 h-100 bg-light shadow-sm">
                 <div className="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle fw-bold fs-5 mb-3" style={{ width: '48px', height: '48px' }}>
                   3
                 </div>
-                <h5 className="fw-bold mb-2">Manage Assets &amp; Dispatch</h5>
+                <h5 className="fw-bold mb-2">Dispatch &amp; Track</h5>
                 <p className="text-muted small">
-                  Your tenant workspace is provisioned instantly. Add vehicles, enroll certified drivers, assign trips, and track live dispatches.
+                  Create trips, allocate cargo shipments, and track route execution with live telemetry.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-3 col-6">
+              <div className="p-4 border rounded-3 h-100 bg-light shadow-sm">
+                <div className="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle fw-bold fs-5 mb-3" style={{ width: '48px', height: '48px' }}>
+                  4
+                </div>
+                <h5 className="fw-bold mb-2">Optimize &amp; Scale</h5>
+                <p className="text-muted small">
+                  Monitor geofences, catch delays, analyze fuel economy, and export audit reports.
                 </p>
               </div>
             </div>
@@ -329,7 +483,7 @@ export const LandingPage: React.FC = () => {
 
           <div className="text-center mt-5">
             <Link to="/signup" className="btn btn-primary btn-lg px-5 py-2 fw-bold shadow">
-              Launch Your Warehouse Workspace Now &rarr;
+              Get Started Free &rarr;
             </Link>
           </div>
         </div>
@@ -345,16 +499,16 @@ export const LandingPage: React.FC = () => {
               </div>
               <h2 className="fw-bold mb-3">Hardened Multi-Tenant Isolation &amp; RBAC</h2>
               <p className="text-slate-300 mb-4">
-                FleetX enforces tenant-level query filtering and thread-local tenancy contexts across all database transactions. Foreign key cascading and sole-administrator protection ensure your warehouse operations remain safe from inadvertent lockouts or cross-tenant visibility.
+                FleetX enforces fail-closed tenant-level query filtering and thread-local tenancy contexts across all database transactions. Foreign key cascading and sole-administrator protection ensure your warehouse operations remain safe from inadvertent lockouts or cross-tenant visibility.
               </p>
               <div className="d-flex flex-column gap-3">
                 <div className="d-flex align-items-center gap-3">
                   <div className="p-2 rounded bg-slate-800 text-success">
-                    <CheckCircle2 size={18} />
+                    <Lock size={18} />
                   </div>
                   <div>
-                    <strong className="d-block text-white">SHA-256 Hashed OTP Store</strong>
-                    <small className="text-slate-400">OTPs are never stored in plaintext and expire automatically in 5 minutes.</small>
+                    <strong className="d-block text-white">Fail-Closed Tenant Partition</strong>
+                    <small className="text-slate-400">Strict thread-local context guards prevent data leaks or unauthenticated tenant operations.</small>
                   </div>
                 </div>
                 <div className="d-flex align-items-center gap-3">
@@ -362,17 +516,26 @@ export const LandingPage: React.FC = () => {
                     <CheckCircle2 size={18} />
                   </div>
                   <div>
-                    <strong className="d-block text-white">Rate-Limited Cooldowns</strong>
-                    <small className="text-slate-400">Strict 60-second anti-spam throttling and 5 maximum verification attempts.</small>
+                    <strong className="d-block text-white">Cryptographic SHA-256 HMAC OTP Authentication</strong>
+                    <small className="text-slate-400">OTPs are hashed with server HMAC secrets; codes expire in 5 minutes with 60-second cooldown guards.</small>
                   </div>
                 </div>
                 <div className="d-flex align-items-center gap-3">
                   <div className="p-2 rounded bg-slate-800 text-success">
-                    <CheckCircle2 size={18} />
+                    <Users size={18} />
                   </div>
                   <div>
-                    <strong className="d-block text-white">Zero-Cost Cloud Deployment</strong>
-                    <small className="text-slate-400">Optimized for containerized cloud deployment on Render + free Aiven MySQL.</small>
+                    <strong className="d-block text-white">5-Tier Role-Based Access Control</strong>
+                    <small className="text-slate-400">Precise authorization boundaries for ADMIN, DISPATCHER, SAFETY_OFFICER, DRIVER, and ANALYST.</small>
+                  </div>
+                </div>
+                <div className="d-flex align-items-center gap-3">
+                  <div className="p-2 rounded bg-slate-800 text-success">
+                    <FileText size={18} />
+                  </div>
+                  <div>
+                    <strong className="d-block text-white">Immutable Audit Trail</strong>
+                    <small className="text-slate-400">Every authentication attempt, vehicle update, and trip transition is logged with tenant attribution.</small>
                   </div>
                 </div>
               </div>
@@ -380,13 +543,13 @@ export const LandingPage: React.FC = () => {
 
             <div className="col-lg-6">
               <div className="p-4 p-md-5 rounded-4 border border-secondary border-opacity-25 shadow-lg" style={{ background: '#1e293b' }}>
-                <h4 className="fw-bold text-white mb-3">Ready to modernize your fleet?</h4>
+                <h4 className="fw-bold text-white mb-3">Ready to modernize your fleet operations?</h4>
                 <p className="text-slate-300 small mb-4">
-                  Join independent warehouse operators who rely on FleetX for accurate dispatching and GPS telemetry tracking.
+                  Join independent warehouse operators who rely on FleetX for accurate dispatching, GPS telemetry tracking, and compliant manifest workflows.
                 </p>
                 <div className="d-grid gap-3">
                   <Link to="/signup" className="btn btn-primary py-2 fw-semibold">
-                    Register Free Warehouse Account
+                    Get Started Free
                   </Link>
                   <Link to="/login" className="btn btn-outline-light py-2 fw-semibold">
                     Sign In with Registered Email
