@@ -68,7 +68,7 @@ export const TripsPage: React.FC = () => {
         subtitle="Manage logistics dispatch workflows, driver/vehicle pairing, and active trip transit milestones."
       >
         <button
-          className="btn btn-primary btn-sm d-flex align-items-center gap-2"
+          className="btn fx-btn-gold btn-sm d-flex align-items-center gap-2 shadow"
           onClick={() => setIsCreateOpen(true)}
         >
           <Plus size={16} /> Schedule Trip
@@ -78,27 +78,27 @@ export const TripsPage: React.FC = () => {
       {/* KPI Stats Strip */}
       <div className="row g-3 mb-4">
         <div className="col-6 col-md">
-          <div className="p-3 bg-white rounded border shadow-sm">
-            <div className="text-muted small fw-medium mb-1">Total Dispatched</div>
-            <div className="h4 fw-bold text-slate-900 mb-0">{totalElements}</div>
+          <div className="p-3 rounded-3 border fx-glass-card" style={{ background: 'rgba(48, 33, 28, 0.78)', borderColor: 'rgba(232, 211, 162, 0.22)' }}>
+            <div className="small fw-medium mb-1" style={{ color: 'var(--fx-muted-sand)' }}>Total Dispatched</div>
+            <div className="h4 fw-bold mb-0" style={{ color: 'var(--fx-ivory-text)' }}>{totalElements}</div>
           </div>
         </div>
         <div className="col-6 col-md">
-          <div className="p-3 bg-white rounded border shadow-sm">
-            <div className="text-muted small fw-medium mb-1">In Progress (Transit)</div>
-            <div className="h4 fw-bold text-info mb-0">{inProgressCount}</div>
+          <div className="p-3 rounded-3 border fx-glass-card" style={{ background: 'rgba(48, 33, 28, 0.78)', borderColor: 'rgba(232, 211, 162, 0.22)' }}>
+            <div className="small fw-medium mb-1" style={{ color: 'var(--fx-muted-sand)' }}>In Progress (Transit)</div>
+            <div className="h4 fw-bold mb-0" style={{ color: 'var(--fx-champagne-gold)' }}>{inProgressCount}</div>
           </div>
         </div>
         <div className="col-6 col-md">
-          <div className="p-3 bg-white rounded border shadow-sm">
-            <div className="text-muted small fw-medium mb-1">Scheduled / Assigned</div>
-            <div className="h4 fw-bold text-warning mb-0">{assignedCount}</div>
+          <div className="p-3 rounded-3 border fx-glass-card" style={{ background: 'rgba(48, 33, 28, 0.78)', borderColor: 'rgba(232, 211, 162, 0.22)' }}>
+            <div className="small fw-medium mb-1" style={{ color: 'var(--fx-muted-sand)' }}>Scheduled / Assigned</div>
+            <div className="h4 fw-bold mb-0" style={{ color: '#FFAE78' }}>{assignedCount}</div>
           </div>
         </div>
         <div className="col-6 col-md">
-          <div className="p-3 bg-white rounded border shadow-sm">
-            <div className="text-muted small fw-medium mb-1">Completed Deliveries</div>
-            <div className="h4 fw-bold text-success mb-0">{completedCount}</div>
+          <div className="p-3 rounded-3 border fx-glass-card" style={{ background: 'rgba(48, 33, 28, 0.78)', borderColor: 'rgba(232, 211, 162, 0.22)' }}>
+            <div className="small fw-medium mb-1" style={{ color: 'var(--fx-muted-sand)' }}>Completed Deliveries</div>
+            <div className="h4 fw-bold mb-0" style={{ color: '#8CE3A7' }}>{completedCount}</div>
           </div>
         </div>
       </div>
