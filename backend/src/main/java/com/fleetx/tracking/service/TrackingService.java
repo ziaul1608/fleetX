@@ -429,8 +429,15 @@ public class TrackingService implements AlertPublisher {
         try {
             log.debug("Broadcasting simulated telemetry ping for vehicle #{}: [lat={}, lng={}]",
                     ping.vehicleId(), ping.latitude(), ping.longitude());
-            messagingTemplate.convertAndSend("/topic/vehicles/" + ping.vehicleId(), ping);
-            messagingTemplate.convertAndSend("/topic/fleet-locations", ping);
+            Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(null);
+            if (tenantId != null) {
+                messagingTemplate.convertAndSend("/topic/tenants/" + tenantId + "/vehicles/" + ping.vehicleId(), ping);
+                messagingTemplate.convertAndSend("/topic/tenants/" + tenantId + "/fleet-locations", ping);
+            }
+            if (tenantId == null || tenantId == 1L) {
+                messagingTemplate.convertAndSend("/topic/vehicles/" + ping.vehicleId(), ping);
+                messagingTemplate.convertAndSend("/topic/fleet-locations", ping);
+            }
         } catch (Exception ex) {
             log.warn("STOMP telemetry broadcast encountered non-fatal error for vehicle #{}: {}",
                     ping.vehicleId(), ex.getMessage());
@@ -1015,7 +1022,13 @@ public class TrackingService implements AlertPublisher {
 
         AlertResponseDto dto = toAlertDto(saved);
         try {
-            messagingTemplate.convertAndSend("/topic/alerts", dto);
+            Long alertTenantId = saved.getTenantId() != null ? saved.getTenantId() : tenantId;
+            if (alertTenantId != null) {
+                messagingTemplate.convertAndSend("/topic/tenants/" + alertTenantId + "/alerts", dto);
+            }
+            if (alertTenantId == null || alertTenantId == 1L) {
+                messagingTemplate.convertAndSend("/topic/alerts", dto);
+            }
         } catch (Exception ex) {
             log.warn("STOMP alert broadcast encountered non-fatal error: {}", ex.getMessage());
         }

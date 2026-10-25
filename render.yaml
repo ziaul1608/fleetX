@@ -60,3 +60,5 @@ services:
         sync: false
       - key: FLEETX_MAIL_FROM
         sync: false
+      - key: FLEETX_OTP_HMAC_SECRET
+        sync: false
