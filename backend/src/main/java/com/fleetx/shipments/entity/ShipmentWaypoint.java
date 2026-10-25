@@ -16,7 +16,7 @@ public class ShipmentWaypoint {
     private Long shipmentId;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(name = "waypoint_name", nullable = false, length = 120)
     private String waypointName;
@@ -47,6 +47,13 @@ public class ShipmentWaypoint {
         this.sequenceOrder = sequenceOrder;
         this.stopType = stopType != null ? stopType.trim().toUpperCase() : "INTERMEDIATE";
         this.estimatedArrival = estimatedArrival;
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
     }
 
     public Long getId() { return id; }

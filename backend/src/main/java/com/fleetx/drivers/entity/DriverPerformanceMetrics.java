@@ -16,7 +16,7 @@ public class DriverPerformanceMetrics {
     private Long driverId;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(name = "total_trips_completed", nullable = false)
     private Integer totalTripsCompleted = 0;
@@ -50,6 +50,16 @@ public class DriverPerformanceMetrics {
         this.totalDistanceKm = BigDecimal.ZERO;
         this.ratingScore = new BigDecimal("100.00");
         this.lastCalculatedAt = Instant.now();
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        if (lastCalculatedAt == null) {
+            lastCalculatedAt = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
     }
 
     public Long getId() { return id; }

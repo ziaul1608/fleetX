@@ -36,12 +36,26 @@ public final class TenantSecurityContext {
 
         Object principal = auth.getPrincipal();
         if (principal instanceof FleetxUserPrincipal userPrincipal) {
-            return userPrincipal.getTenantId();
+            Long tid = userPrincipal.getTenantId();
+            if (tid == null) {
+                throw new DomainException("Active tenant context is required for this operation.",
+                        HttpStatus.BAD_REQUEST, "TENANT_CONTEXT_REQUIRED");
+            }
+            return tid;
         }
 
         // For tests using @WithMockUser or mock principals where explicit tenantId was not bound:
         // Default to legacy tenant 1L if available
         return 1L;
+    }
+
+    public static Long requireTenantId() {
+        Long tenantId = getCurrentTenantId();
+        if (tenantId == null) {
+            throw new DomainException("Active tenant context is required for this operation.",
+                    HttpStatus.BAD_REQUEST, "TENANT_CONTEXT_REQUIRED");
+        }
+        return tenantId;
     }
 
     public static Optional<Long> getOptionalTenantId() {

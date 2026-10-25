@@ -9,18 +9,24 @@ import com.fleetx.auth.repository.OtpChallengeRepository;
 import com.fleetx.shared.exception.DomainException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Service
 public class OtpService {
@@ -31,10 +37,21 @@ public class OtpService {
     public static final int COOLDOWN_SECONDS = 60;  // 1 minute
     public static final int MAX_ATTEMPTS = 5;
 
+    private static final int MAX_IP_REQUESTS_PER_WINDOW = 15;
+    private static final Duration IP_WINDOW = Duration.ofMinutes(10);
+    private static final int MAX_EMAIL_REQUESTS_PER_HOUR = 5;
+    private static final Duration EMAIL_WINDOW = Duration.ofHours(1);
+
     private final OtpChallengeRepository otpChallengeRepository;
     private final EmailService emailService;
     private final ObjectMapper objectMapper;
     private final SecureRandom secureRandom = new SecureRandom();
+
+    private final ConcurrentHashMap<String, Deque<Instant>> ipRequestTimestamps = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Deque<Instant>> emailRequestTimestamps = new ConcurrentHashMap<>();
+
+    @Value("${fleetx.auth.otp.hmac-secret:fleetx-default-dev-hmac-secret-key-change-in-prod-32bytes}")
+    private String hmacSecret;
 
     public OtpService(OtpChallengeRepository otpChallengeRepository, EmailService emailService, ObjectMapper objectMapper) {
         this.otpChallengeRepository = otpChallengeRepository;
@@ -46,9 +63,11 @@ public class OtpService {
     public OtpSentResponse sendSignupOtp(SendSignupOtpRequest request, String ipAddress) {
         String normalizedEmail = request.email().trim().toLowerCase();
         enforceCooldown(normalizedEmail, "SIGNUP");
+        checkEmailHourlyLimit(normalizedEmail);
+        checkIpRateLimit(ipAddress);
 
         String otp = generateNumericOtp();
-        String hash = sha256Hex(otp);
+        String hash = computeHmacHex(normalizedEmail, otp);
 
         String metadataJson;
         try {
@@ -92,9 +111,11 @@ public class OtpService {
     public OtpSentResponse sendLoginOtp(SendLoginOtpRequest request, String ipAddress, String userFullName) {
         String normalizedEmail = request.email().trim().toLowerCase();
         enforceCooldown(normalizedEmail, "LOGIN");
+        checkEmailHourlyLimit(normalizedEmail);
+        checkIpRateLimit(ipAddress);
 
         String otp = generateNumericOtp();
-        String hash = sha256Hex(otp);
+        String hash = computeHmacHex(normalizedEmail, otp);
 
         Instant now = Instant.now();
         Instant resendAvailableAt = now.plusSeconds(COOLDOWN_SECONDS);
@@ -119,7 +140,7 @@ public class OtpService {
                 "LOGIN",
                 VALIDITY_SECONDS,
                 COOLDOWN_SECONDS,
-                "Verification code dispatched to " + normalizedEmail
+                "If an account is associated with this email address, a verification code has been dispatched."
         );
     }
 
@@ -162,8 +183,8 @@ public class OtpService {
 
         challenge.setAttempts(challenge.getAttempts() + 1);
 
-        String candidateHash = sha256Hex(cleanedOtp);
-        if (!candidateHash.equals(challenge.getOtpHash())) {
+        String candidateHmac = computeHmacHex(normalizedEmail, cleanedOtp);
+        if (!MessageDigest.isEqual(candidateHmac.getBytes(StandardCharsets.UTF_8), challenge.getOtpHash().getBytes(StandardCharsets.UTF_8))) {
             otpChallengeRepository.save(challenge);
             int remaining = Math.max(0, challenge.getMaxAttempts() - challenge.getAttempts());
             throw new DomainException("Incorrect verification code. Attempts remaining: " + remaining,
@@ -192,8 +213,64 @@ public class OtpService {
         }
     }
 
+    private void checkIpRateLimit(String ipAddress) {
+        if (ipAddress == null || ipAddress.isBlank()) return;
+        Instant now = Instant.now();
+        Instant windowStart = now.minus(IP_WINDOW);
+        Deque<Instant> timestamps = ipRequestTimestamps.computeIfAbsent(ipAddress, k -> new ConcurrentLinkedDeque<>());
+        synchronized (timestamps) {
+            while (!timestamps.isEmpty() && timestamps.peekFirst().isBefore(windowStart)) {
+                timestamps.pollFirst();
+            }
+            if (timestamps.size() >= MAX_IP_REQUESTS_PER_WINDOW) {
+                throw new DomainException(
+                        "Too many verification requests from this network. Please wait before trying again.",
+                        HttpStatus.TOO_MANY_REQUESTS,
+                        "IP_RATE_LIMIT_EXCEEDED"
+                );
+            }
+            timestamps.addLast(now);
+        }
+    }
+
+    private void checkEmailHourlyLimit(String email) {
+        Instant now = Instant.now();
+        Instant windowStart = now.minus(EMAIL_WINDOW);
+        Deque<Instant> timestamps = emailRequestTimestamps.computeIfAbsent(email, k -> new ConcurrentLinkedDeque<>());
+        synchronized (timestamps) {
+            while (!timestamps.isEmpty() && timestamps.peekFirst().isBefore(windowStart)) {
+                timestamps.pollFirst();
+            }
+            if (timestamps.size() >= MAX_EMAIL_REQUESTS_PER_HOUR) {
+                throw new DomainException(
+                        "Too many verification requests for this email address. Please try again later.",
+                        HttpStatus.TOO_MANY_REQUESTS,
+                        "EMAIL_RATE_LIMIT_EXCEEDED"
+                );
+            }
+            timestamps.addLast(now);
+        }
+    }
+
     private String generateNumericOtp() {
         return String.format("%06d", secureRandom.nextInt(1_000_000));
+    }
+
+    public String computeHmacHex(String email, String rawOtp) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKey = new SecretKeySpec(hmacSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            mac.init(secretKey);
+            String payload = email.toLowerCase().trim() + ":" + rawOtp.trim();
+            byte[] hmacBytes = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(hmacBytes.length * 2);
+            for (byte b : hmacBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to calculate HMAC-SHA-256 for verification challenge", e);
+        }
     }
 
     public static String sha256Hex(String raw) {

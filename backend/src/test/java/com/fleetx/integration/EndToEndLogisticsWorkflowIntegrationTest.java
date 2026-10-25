@@ -53,6 +53,9 @@ class EndToEndLogisticsWorkflowIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private com.fleetx.auth.service.MockEmailService mockEmailService;
+
+    @Autowired
     private RoleRepository roleRepository;
 
     @Autowired
@@ -92,21 +95,28 @@ class EndToEndLogisticsWorkflowIntegrationTest {
     @Test
     @DisplayName("End-to-End Logistics Workflow: Login -> Vehicle -> Fuel -> Driver -> Trip -> Shipment & Waypoints -> GPS Simulation -> Geofence Alert Ack -> Delivery & Trip Completion -> Reports & CSV -> Logout")
     void fullEndToEndLogisticsScenario() throws Exception {
-        // 0. CSRF Bootstrap + Session Login
+        // 0. CSRF Bootstrap + Passwordless Email OTP Login
         MvcResult csrfResult = mockMvc.perform(get("/api/v1/auth/csrf"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andReturn();
         Cookie xsrfCookie = csrfResult.getResponse().getCookie("XSRF-TOKEN");
 
-        String loginPayload = objectMapper.writeValueAsString(Map.of(
-                "email", "e2e.admin@fleetx.local",
-                "password", "IntegrationPass123!"
-        ));
-
-        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+        mockMvc.perform(post("/api/v1/auth/otp/send-login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginPayload))
+                        .content(objectMapper.writeValueAsString(Map.of("email", "e2e.admin@fleetx.local"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        String otp = mockEmailService.getLastSentOtp("e2e.admin@fleetx.local")
+                .orElseThrow(() -> new IllegalStateException("OTP was not dispatched to mock email service"));
+
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/otp/verify-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", "e2e.admin@fleetx.local",
+                                "otp", otp
+                        ))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.email").value("e2e.admin@fleetx.local"))

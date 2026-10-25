@@ -15,7 +15,7 @@ public class ShipmentTimelineEvent {
     private Long shipmentId;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(name = "event_type", nullable = false, length = 50)
     private String eventType;
@@ -43,6 +43,9 @@ public class ShipmentTimelineEvent {
     public void onPrePersist() {
         if (createdAt == null) {
             createdAt = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
         }
     }
 

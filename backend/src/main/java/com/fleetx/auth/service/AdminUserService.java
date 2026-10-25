@@ -241,21 +241,10 @@ public class AdminUserService {
 
     @Transactional
     public void resetUserPassword(Long id, AdminPasswordResetRequest request, HttpServletRequest httpRequest, Long performingAdminId) {
-        Long tenantId = com.fleetx.shared.context.TenantSecurityContext.getCurrentTenantId();
-        User user = userRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", id));
-
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-        userRepository.save(user);
-
-        String clientIp = extractClientIp(httpRequest);
-        auditService.recordEvent(
-                performingAdminId,
-                "USER_PASSWORD_RESET",
-                "USER",
-                user.getId(),
-                clientIp,
-                "{\"targetEmail\":\"" + user.getEmail() + "\"}"
+        throw new DomainException(
+                "Password management has been retired. Users authenticate securely via Email OTP dispatched to their email.",
+                HttpStatus.BAD_REQUEST,
+                "PASSWORD_AUTH_RETIRED"
         );
     }
 
@@ -293,13 +282,27 @@ public class AdminUserService {
                 .map(r -> r.getName().replace("ROLE_", ""))
                 .collect(Collectors.toList());
 
+        Long tid = user.getTenantId() != null ? user.getTenantId() : 1L;
+        String companyName = "FleetX Global Logistics";
+        String warehouseName = "Central Warehouse";
+        if (user.getTenantId() != null) {
+            var tenantOpt = tenantRepository.findById(user.getTenantId());
+            if (tenantOpt.isPresent()) {
+                companyName = tenantOpt.get().getCompanyName();
+                warehouseName = tenantOpt.get().getWarehouseName();
+            }
+        }
+
         return new UserResponseDto(
                 user.getId(),
                 user.getEmail(),
                 user.getFullName(),
                 roleNames,
                 user.isActive(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                tid,
+                companyName,
+                warehouseName
         );
     }
 

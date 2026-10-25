@@ -53,7 +53,7 @@ public class Vehicle {
     private Boolean active = true;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -91,6 +91,9 @@ public class Vehicle {
         }
         if (odometerKm == null) {
             odometerKm = 0.0;
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
         }
     }
 

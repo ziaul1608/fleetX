@@ -14,6 +14,10 @@ vi.mock('../features/auth/api/authApi', () => ({
   authApi: {
     fetchCsrf: vi.fn().mockResolvedValue({ token: 'test', headerName: 'X-CSRF', parameterName: '_csrf' }),
     login: vi.fn(),
+    sendLoginOtp: vi.fn(),
+    verifyLoginOtp: vi.fn(),
+    sendSignupOtp: vi.fn(),
+    verifySignupOtp: vi.fn(),
     logout: vi.fn(),
     getMe: vi.fn(),
     getUsers: vi.fn(),
@@ -70,7 +74,7 @@ describe('Identity & Admin Frontend Components', () => {
   });
 
   describe('LoginPage', () => {
-    it('renders login form and bootstraps CSRF token on mount', async () => {
+    it('renders passwordless login form and bootstraps CSRF token on mount', async () => {
       vi.mocked(authApi.fetchCsrf).mockResolvedValueOnce({
         token: 'test-csrf-token',
         headerName: 'X-CSRF-TOKEN',
@@ -80,97 +84,118 @@ describe('Identity & Admin Frontend Components', () => {
       renderLoginPage();
 
       expect(screen.getByText(/FleetX Control Tower/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Email Address/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Sign In to Control Tower/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/Registered Work Email/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Send Login Code/i })).toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Password/i)).not.toBeInTheDocument();
 
       await waitFor(() => {
         expect(authApi.fetchCsrf).toHaveBeenCalledTimes(1);
       });
     });
 
-    it('submits valid credentials and triggers login API', async () => {
+    it('submits valid email, sends login code, and displays verification step', async () => {
       vi.mocked(authApi.fetchCsrf).mockResolvedValueOnce({
         token: 'test-csrf-token',
         headerName: 'X-CSRF-TOKEN',
         parameterName: '_csrf',
       });
-      vi.mocked(authApi.login).mockResolvedValueOnce(mockUsers[0]);
+      vi.mocked(authApi.sendLoginOtp).mockResolvedValueOnce({
+        email: 'owner@warehouse.test',
+        purpose: 'LOGIN',
+        expiresInSeconds: 300,
+        cooldownSeconds: 60,
+        message: 'If an account is associated with this email, a verification code has been dispatched.',
+      });
 
       renderLoginPage();
 
-      fireEvent.change(screen.getByLabelText(/Email Address/i), {
-        target: { value: 'admin@fleetx.local' },
-      });
-      fireEvent.change(screen.getByLabelText(/Password/i), {
-        target: { value: 'SecretPass123!' },
+      fireEvent.change(screen.getByLabelText(/Registered Work Email/i), {
+        target: { value: 'owner@warehouse.test' },
       });
 
-      fireEvent.click(screen.getByRole('button', { name: /Sign In to Control Tower/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Send Login Code/i }));
 
       await waitFor(() => {
-        expect(authApi.login).toHaveBeenCalledWith({
-          email: 'admin@fleetx.local',
-          password: 'SecretPass123!',
+        expect(authApi.sendLoginOtp).toHaveBeenCalledWith({
+          email: 'owner@warehouse.test',
         });
       });
+
+      expect(await screen.findByLabelText(/Enter 6-Digit Code/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Verify & Enter Warehouse/i })).toBeInTheDocument();
     });
 
-    it('renders email and password inputs empty by default with no development credential hints', () => {
+    it('renders email input empty by default with no development credentials or password hints', () => {
       renderLoginPage();
-      expect(screen.getByLabelText(/Email Address/i)).toHaveValue('');
-      expect(screen.getByLabelText(/Password/i)).toHaveValue('');
+      expect(screen.getByLabelText(/Registered Work Email/i)).toHaveValue('');
+      expect(screen.queryByLabelText(/^Password/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Development Admin/i)).not.toBeInTheDocument();
     });
 
-    it('displays error message when login fails with 401 credentials error', async () => {
+    it('displays error message when login OTP verification fails with incorrect code', async () => {
       vi.mocked(authApi.fetchCsrf).mockResolvedValueOnce({
         token: 'test-token',
         headerName: 'X-CSRF-TOKEN',
         parameterName: '_csrf',
       });
-      vi.mocked(authApi.login).mockRejectedValueOnce({
-        errorCode: 'UNAUTHORIZED',
-        message: 'Invalid email or password credentials.',
+      vi.mocked(authApi.sendLoginOtp).mockResolvedValueOnce({
+        email: 'owner@warehouse.test',
+        purpose: 'LOGIN',
+        expiresInSeconds: 300,
+        cooldownSeconds: 60,
+        message: 'Verification code dispatched.',
+      });
+      vi.mocked(authApi.verifyLoginOtp).mockRejectedValueOnce({
+        errorCode: 'INCORRECT_OTP',
+        message: 'Incorrect verification code. Attempts remaining: 4',
       });
 
       renderLoginPage();
 
-      fireEvent.change(screen.getByLabelText(/Email Address/i), {
-        target: { value: 'admin@fleetx.local' },
+      fireEvent.change(screen.getByLabelText(/Registered Work Email/i), {
+        target: { value: 'owner@warehouse.test' },
       });
-      fireEvent.change(screen.getByLabelText(/Password/i), {
-        target: { value: 'WrongPassword123!' },
-      });
+      fireEvent.click(screen.getByRole('button', { name: /Send Login Code/i }));
 
-      fireEvent.click(screen.getByRole('button', { name: /Sign In to Control Tower/i }));
+      const codeInput = await screen.findByLabelText(/Enter 6-Digit Code/i);
+      fireEvent.change(codeInput, { target: { value: '999999' } });
+
+      fireEvent.click(screen.getByRole('button', { name: /Verify & Enter Warehouse/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/Invalid email or password/i)).toBeInTheDocument();
+        expect(screen.getByText(/Incorrect verification code/i)).toBeInTheDocument();
       });
     });
 
-    it('displays account deactivated alert when deactivated user attempts login', async () => {
+    it('displays account deactivated alert when deactivated user attempts login verification', async () => {
       vi.mocked(authApi.fetchCsrf).mockResolvedValueOnce({
         token: 'test-token',
         headerName: 'X-CSRF-TOKEN',
         parameterName: '_csrf',
       });
-      vi.mocked(authApi.login).mockRejectedValueOnce({
+      vi.mocked(authApi.sendLoginOtp).mockResolvedValueOnce({
+        email: 'deactivated@warehouse.test',
+        purpose: 'LOGIN',
+        expiresInSeconds: 300,
+        cooldownSeconds: 60,
+        message: 'Verification code dispatched.',
+      });
+      vi.mocked(authApi.verifyLoginOtp).mockRejectedValueOnce({
         errorCode: 'ACCOUNT_DEACTIVATED',
-        message: 'Account has been deactivated.',
+        message: 'Your account has been deactivated.',
       });
 
       renderLoginPage();
 
-      fireEvent.change(screen.getByLabelText(/Email Address/i), {
-        target: { value: 'deactivated@fleetx.local' },
+      fireEvent.change(screen.getByLabelText(/Registered Work Email/i), {
+        target: { value: 'deactivated@warehouse.test' },
       });
-      fireEvent.change(screen.getByLabelText(/Password/i), {
-        target: { value: 'AnyPass123!' },
-      });
+      fireEvent.click(screen.getByRole('button', { name: /Send Login Code/i }));
 
-      fireEvent.click(screen.getByRole('button', { name: /Sign In to Control Tower/i }));
+      const codeInput = await screen.findByLabelText(/Enter 6-Digit Code/i);
+      fireEvent.change(codeInput, { target: { value: '123456' } });
+
+      fireEvent.click(screen.getByRole('button', { name: /Verify & Enter Warehouse/i }));
 
       await waitFor(() => {
         expect(screen.getByText(/Your account has been deactivated/i)).toBeInTheDocument();

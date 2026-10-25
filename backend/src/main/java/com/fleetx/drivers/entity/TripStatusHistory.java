@@ -27,7 +27,7 @@ public class TripStatusHistory {
     private Long updatedBy;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -47,6 +47,9 @@ public class TripStatusHistory {
     public void onPrePersist() {
         if (createdAt == null) {
             createdAt = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
         }
     }
 

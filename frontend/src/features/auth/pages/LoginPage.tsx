@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Radio,
-  Lock,
   Mail,
   AlertCircle,
   ShieldCheck,
@@ -10,6 +9,7 @@ import {
   RefreshCw,
   ArrowRight,
   ArrowLeft,
+  KeyRound,
 } from 'lucide-react';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../../../shared/context/AuthContext';
@@ -17,14 +17,7 @@ import { useAuth } from '../../../shared/context/AuthContext';
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithOtp, isAuthenticated } = useAuth();
-
-  // Mode: 'PASSWORD' or 'OTP'
-  const [authMode, setAuthMode] = useState<'PASSWORD' | 'OTP'>('PASSWORD');
-
-  // Password Login State
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { loginWithOtp, isAuthenticated } = useAuth();
 
   // OTP Login State
   const [otpEmail, setOtpEmail] = useState('');
@@ -59,40 +52,11 @@ export const LoginPage: React.FC = () => {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  // Handle Standard Password Login
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password) {
-      setError('Please provide both your registered email and password.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      await login(email.trim(), password);
-      const target = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/dashboard';
-      navigate(target, { replace: true });
-    } catch (err: unknown) {
-      const apiErr = err as { status?: number; errorCode?: string; message?: string };
-      if (apiErr.errorCode === 'ACCOUNT_DEACTIVATED') {
-        setError('Your account has been deactivated. Please contact your system administrator.');
-      } else if (apiErr.status === 401 || apiErr.errorCode === 'UNAUTHORIZED' || apiErr.errorCode === 'BAD_CREDENTIALS') {
-        setError('Invalid email or password. Please verify your credentials.');
-      } else {
-        setError(apiErr.message || 'Authentication failed. Please verify credentials.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle Send Login OTP
+  // Handle Send Login OTP (Email enumeration defense: uniform feedback)
   const handleSendLoginOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpEmail.trim()) {
-      setError('Please enter your registered email address.');
+      setError('Please enter your registered work email address.');
       return;
     }
 
@@ -102,17 +66,17 @@ export const LoginPage: React.FC = () => {
 
     try {
       const res = await authApi.sendLoginOtp({ email: otpEmail.trim().toLowerCase() });
-      setSuccessMsg(res.message || `Login code sent to ${otpEmail.trim()}`);
+      setSuccessMsg(res.message || `If an account is associated with this email, a verification code has been dispatched.`);
       setCooldown(res.cooldownSeconds || 60);
       setOtpSent(true);
     } catch (err: unknown) {
       const apiErr = err as { status?: number; errorCode?: string; message?: string };
-      if (apiErr.status === 404 || apiErr.errorCode === 'RESOURCE_NOT_FOUND') {
-        setError('No account found with this email. Please register your warehouse first.');
-      } else if (apiErr.errorCode === 'RATE_LIMIT_COOLDOWN') {
+      if (apiErr.errorCode === 'OTP_COOLDOWN') {
         setError(apiErr.message || 'Please wait before requesting a new code.');
+      } else if (apiErr.errorCode === 'IP_RATE_LIMIT_EXCEEDED' || apiErr.errorCode === 'EMAIL_RATE_LIMIT_EXCEEDED') {
+        setError(apiErr.message || 'Rate limit exceeded. Please wait a few minutes before trying again.');
       } else {
-        setError(apiErr.message || 'Failed to send login code. Please verify email.');
+        setError(apiErr.message || 'Failed to dispatch login code. Please verify email.');
       }
     } finally {
       setLoading(false);
@@ -147,6 +111,10 @@ export const LoginPage: React.FC = () => {
         setError('Verification code has expired. Please request a new code.');
       } else if (apiErr.errorCode === 'MAX_ATTEMPTS_EXCEEDED') {
         setError('Maximum verification attempts exceeded. Please request a new code.');
+      } else if (apiErr.errorCode === 'ACCOUNT_DEACTIVATED') {
+        setError('Your account has been deactivated. Please contact your system administrator.');
+      } else if (apiErr.errorCode === 'TENANT_INACTIVE') {
+        setError('Organization account is suspended. Please contact support.');
       } else {
         setError(apiErr.message || 'Login verification failed. Please try again.');
       }
@@ -168,31 +136,10 @@ export const LoginPage: React.FC = () => {
           <p className="text-muted small">Intelligent Fleet &amp; Logistics Management System</p>
         </div>
 
-        {/* Method Toggle Buttons */}
-        <div className="d-flex bg-light p-1 rounded-2 mb-3 border">
-          <button
-            type="button"
-            className={`btn btn-sm flex-fill fw-medium border-0 ${authMode === 'PASSWORD' ? 'bg-white shadow-sm text-primary' : 'text-muted'}`}
-            onClick={() => {
-              setAuthMode('PASSWORD');
-              setError(null);
-              setSuccessMsg(null);
-            }}
-          >
-            Password Login
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm flex-fill fw-medium border-0 ${authMode === 'OTP' ? 'bg-white shadow-sm text-primary' : 'text-muted'}`}
-            onClick={() => {
-              setAuthMode('OTP');
-              setError(null);
-              setSuccessMsg(null);
-              if (!otpEmail && email) setOtpEmail(email);
-            }}
-          >
-            Email Code (OTP)
-          </button>
+        {/* Security Notice: Passwordless Email OTP Authentication */}
+        <div className="p-2 mb-3 rounded-2 bg-light border d-flex align-items-center gap-2 small text-secondary">
+          <KeyRound size={16} className="text-primary flex-shrink-0" />
+          <span>Passwordless multi-tenant login via secure Email OTP</span>
         </div>
 
         {error && (
@@ -209,184 +156,122 @@ export const LoginPage: React.FC = () => {
           </div>
         )}
 
-        {authMode === 'PASSWORD' ? (
-          /* FORM A: PASSWORD AUTHENTICATION (Backwards Compatible) */
-          <form onSubmit={handlePasswordSubmit}>
-            <div className="mb-3">
-              <label className="form-label small fw-medium text-secondary" htmlFor="login-email">
-                Email Address <span className="text-danger">*</span>
-              </label>
-              <div className="input-group input-group-sm">
-                <span className="input-group-text bg-light text-muted">
-                  <Mail size={14} />
-                </span>
-                <input
-                  id="login-email"
-                  type="email"
-                  className="form-control"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@fleetx.local"
-                  required
-                  autoComplete="email"
-                />
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="form-label small fw-medium text-secondary" htmlFor="login-password">
-                Password <span className="text-danger">*</span>
-              </label>
-              <div className="input-group input-group-sm">
-                <span className="input-group-text bg-light text-muted">
-                  <Lock size={14} />
-                </span>
-                <input
-                  id="login-password"
-                  type="password"
-                  className="form-control"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  autoComplete="current-password"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary w-100 btn-sm py-2 fw-medium d-flex align-items-center justify-content-center gap-2"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                  <span>Authenticating Session...</span>
-                </>
-              ) : (
-                <span>Sign In to Control Tower</span>
-              )}
-            </button>
-          </form>
-        ) : (
-          /* FORM B: PASSWORDLESS EMAIL OTP AUTHENTICATION */
-          <div>
-            {!otpSent ? (
-              <form onSubmit={handleSendLoginOtp}>
-                <div className="mb-4">
-                  <label className="form-label small fw-medium text-secondary" htmlFor="otp-login-email">
-                    Registered Work Email <span className="text-danger">*</span>
-                  </label>
-                  <div className="input-group input-group-sm">
-                    <span className="input-group-text bg-light text-muted">
-                      <Mail size={14} />
-                    </span>
-                    <input
-                      id="otp-login-email"
-                      type="email"
-                      className="form-control"
-                      value={otpEmail}
-                      onChange={(e) => setOtpEmail(e.target.value)}
-                      placeholder="owner@yourwarehouse.com"
-                      required
-                      autoComplete="email"
-                    />
-                  </div>
-                  <small className="text-muted" style={{ fontSize: '0.72rem' }}>
-                    We will send a 6-digit login code to your inbox.
-                  </small>
+        {/* PASSWORDLESS EMAIL OTP AUTHENTICATION */}
+        <div>
+          {!otpSent ? (
+            <form onSubmit={handleSendLoginOtp}>
+              <div className="mb-4">
+                <label className="form-label small fw-medium text-secondary" htmlFor="login-email">
+                  Registered Work Email <span className="text-danger">*</span>
+                </label>
+                <div className="input-group input-group-sm">
+                  <span className="input-group-text bg-light text-muted">
+                    <Mail size={14} />
+                  </span>
+                  <input
+                    id="login-email"
+                    type="email"
+                    className="form-control"
+                    value={otpEmail}
+                    onChange={(e) => setOtpEmail(e.target.value)}
+                    placeholder="owner@yourwarehouse.com"
+                    required
+                    autoComplete="email"
+                  />
                 </div>
+                <small className="text-muted" style={{ fontSize: '0.72rem' }}>
+                  We will send a 6-digit login verification code to your inbox.
+                </small>
+              </div>
 
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100 btn-sm py-2 fw-medium d-flex align-items-center justify-content-center gap-2"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                      <span>Sending Login Code...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Send Login Code</span>
-                      <ArrowRight size={14} />
-                    </>
-                  )}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyLoginOtp}>
-                <div className="mb-4 text-center">
-                  <label className="form-label small fw-medium text-secondary d-block mb-2" htmlFor="otp-login-code">
-                    Enter 6-Digit Code sent to {otpEmail}
-                  </label>
-                  <div className="d-flex justify-content-center mb-2">
-                    <input
-                      id="otp-login-code"
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      className="form-control text-center font-monospace fs-4 fw-bold letter-spacing-lg"
-                      style={{ maxWidth: '240px', letterSpacing: '0.35em' }}
-                      placeholder="123456"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                      autoFocus
-                      required
-                    />
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between small text-muted px-2">
-                    <span>Valid for 5 minutes</span>
-                    {cooldown > 0 ? (
-                      <span>Resend in {cooldown}s</span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleSendLoginOtp}
-                        className="btn btn-link p-0 text-primary small text-decoration-none d-flex align-items-center gap-1"
-                        disabled={loading}
-                      >
-                        <RefreshCw size={12} /> Resend
-                      </button>
-                    )}
-                  </div>
+              <button
+                type="submit"
+                className="btn btn-primary w-100 btn-sm py-2 fw-medium d-flex align-items-center justify-content-center gap-2"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                    <span>Sending Login Code...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send Login Code</span>
+                    <ArrowRight size={14} />
+                  </>
+                )}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyLoginOtp}>
+              <div className="mb-4 text-center">
+                <label className="form-label small fw-medium text-secondary d-block mb-2" htmlFor="otp-login-code">
+                  Enter 6-Digit Code sent to {otpEmail}
+                </label>
+                <div className="d-flex justify-content-center mb-2">
+                  <input
+                    id="otp-login-code"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="form-control text-center font-monospace fs-4 fw-bold letter-spacing-lg"
+                    style={{ maxWidth: '240px', letterSpacing: '0.35em' }}
+                    placeholder="123456"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                    autoFocus
+                    required
+                  />
                 </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100 btn-sm py-2 fw-medium d-flex align-items-center justify-content-center gap-2 mb-2"
-                  disabled={loading || otpCode.length !== 6}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                      <span>Verifying...</span>
-                    </>
+                <div className="d-flex align-items-center justify-content-between small text-muted px-2">
+                  <span>Valid for 5 minutes</span>
+                  {cooldown > 0 ? (
+                    <span>Resend in {cooldown}s</span>
                   ) : (
-                    <span>Verify &amp; Enter Warehouse</span>
+                    <button
+                      type="button"
+                      onClick={handleSendLoginOtp}
+                      className="btn btn-link p-0 text-primary small text-decoration-none d-flex align-items-center gap-1"
+                      disabled={loading}
+                    >
+                      <RefreshCw size={12} /> Resend
+                    </button>
                   )}
-                </button>
+                </div>
+              </div>
 
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary w-100 btn-sm py-1 d-flex align-items-center justify-content-center gap-1"
-                  onClick={() => {
-                    setOtpSent(false);
-                    setOtpCode('');
-                    setError(null);
-                    setSuccessMsg(null);
-                  }}
-                  disabled={loading}
-                >
-                  <ArrowLeft size={13} />
-                  <span>Use different email</span>
-                </button>
-              </form>
-            )}
-          </div>
-        )}
+              <button
+                type="submit"
+                className="btn btn-primary w-100 btn-sm py-2 fw-medium d-flex align-items-center justify-content-center gap-2 mb-2"
+                disabled={loading || otpCode.length !== 6}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                    <span>Verifying...</span>
+                  </>
+                ) : (
+                  <span>Verify &amp; Enter Warehouse</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-outline-secondary w-100 btn-sm py-1 d-flex align-items-center justify-content-center gap-1"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtpCode('');
+                  setError(null);
+                  setSuccessMsg(null);
+                }}
+                disabled={loading}
+              >
+                <ArrowLeft size={13} />
+                <span>Use different email</span>
+              </button>
+            </form>
+          )}
+        </div>
 
         <div className="mt-4 pt-3 border-top text-center text-muted small" style={{ fontSize: '0.78rem' }}>
           <div>

@@ -65,7 +65,7 @@ public class Shipment {
     private String deliveryNotes;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -89,6 +89,9 @@ public class Shipment {
         }
         if (receiverAddress == null) {
             receiverAddress = "Destination Delivery Hub";
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
         }
     }
 

@@ -15,7 +15,7 @@ public class Alert {
     private String alertType;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(nullable = false, length = 20)
     private String severity = "WARNING";
@@ -48,6 +48,16 @@ public class Alert {
     private Instant createdAt = Instant.now();
 
     public Alert() {}
+
+    @PrePersist
+    public void onPrePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

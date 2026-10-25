@@ -15,7 +15,7 @@ public class FuelRecord {
     private Long id;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
@@ -56,6 +56,16 @@ public class FuelRecord {
         this.odometerAtFueling = odometerAtFueling;
         this.fuelStation = fuelStation;
         this.fuelDate = fuelDate != null ? fuelDate : Instant.now();
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        if (fuelDate == null) {
+            fuelDate = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
     }
 
     public Long getId() { return id; }

@@ -3,8 +3,10 @@ package com.fleetx.auth.controller;
 import com.fleetx.auth.dto.*;
 import com.fleetx.auth.service.AuthService;
 import com.fleetx.shared.dto.ApiResponse;
+import com.fleetx.shared.exception.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -59,8 +61,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserResponseDto>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
-        UserResponseDto userDto = authService.login(request, httpRequest);
-        return ResponseEntity.ok(ApiResponse.ok("Authentication successful.", userDto));
+        throw new DomainException(
+                "Password-only authentication has been retired. Please log in using your registered email and a 6-digit verification code.",
+                HttpStatus.BAD_REQUEST,
+                "PASSWORD_AUTH_RETIRED"
+        );
     }
 
     @GetMapping("/me")
@@ -79,11 +84,14 @@ public class AuthController {
 
     @PutMapping("/password")
     public ResponseEntity<ApiResponse<Void>> changePassword(
-            @Valid @RequestBody PasswordChangeRequest request,
+            @Valid @RequestBody(required = false) PasswordChangeRequest request,
             Authentication authentication,
             HttpServletRequest httpRequest) {
-        authService.changePassword(request, authentication, httpRequest);
-        return ResponseEntity.ok(ApiResponse.ok("Password updated successfully.", null));
+        throw new DomainException(
+                "Password management has been retired. FleetX uses passwordless Email OTP authentication.",
+                HttpStatus.BAD_REQUEST,
+                "PASSWORD_AUTH_RETIRED"
+        );
     }
 
     @GetMapping("/csrf")

@@ -167,8 +167,8 @@ describe('Phase 11 — Multi-Tenant SaaS, Public Landing Page & Email OTP Authen
     });
   });
 
-  describe('LoginPage (Passwordless Email OTP Tab)', () => {
-    it('allows toggling between Password Login and Email Code (OTP)', () => {
+  describe('LoginPage (Passwordless Email OTP)', () => {
+    it('renders passwordless login directly without legacy password tabs', () => {
       render(
         <AuthProvider>
           <MemoryRouter>
@@ -177,12 +177,8 @@ describe('Phase 11 — Multi-Tenant SaaS, Public Landing Page & Email OTP Authen
         </AuthProvider>
       );
 
-      expect(screen.getByRole('button', { name: /Password Login/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Email Code \(OTP\)/i })).toBeInTheDocument();
-
-      // Click OTP tab
-      fireEvent.click(screen.getByRole('button', { name: /Email Code \(OTP\)/i }));
-
+      expect(screen.queryByRole('button', { name: /Password Login/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Email Code \(OTP\)/i })).not.toBeInTheDocument();
       expect(screen.getByLabelText(/Registered Work Email/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Send Login Code/i })).toBeInTheDocument();
     });
@@ -204,9 +200,6 @@ describe('Phase 11 — Multi-Tenant SaaS, Public Landing Page & Email OTP Authen
           </MemoryRouter>
         </AuthProvider>
       );
-
-      // Switch to OTP tab
-      fireEvent.click(screen.getByRole('button', { name: /Email Code \(OTP\)/i }));
 
       fireEvent.change(screen.getByLabelText(/Registered Work Email/i), {
         target: { value: 'owner@warehouse.test' },

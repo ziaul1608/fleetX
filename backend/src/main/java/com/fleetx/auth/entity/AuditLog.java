@@ -12,7 +12,7 @@ public class AuditLog {
     private Long id;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(name = "user_id")
     private Long userId;
@@ -36,6 +36,16 @@ public class AuditLog {
     private Instant createdAt = Instant.now();
 
     public AuditLog() {}
+
+    @PrePersist
+    public void onPrePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
+    }
 
     public AuditLog(Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
         this(1L, userId, action, entityType, entityId, ipAddress, detailsJson);

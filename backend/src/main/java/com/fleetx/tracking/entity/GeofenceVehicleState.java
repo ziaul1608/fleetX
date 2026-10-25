@@ -18,7 +18,7 @@ public class GeofenceVehicleState {
     private Long vehicleId;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(nullable = false)
     private Boolean inside;
@@ -27,6 +27,21 @@ public class GeofenceVehicleState {
     private Instant updatedAt = Instant.now();
 
     public GeofenceVehicleState() {}
+
+    @PrePersist
+    public void onPrePersist() {
+        if (updatedAt == null) {
+            updatedAt = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        updatedAt = Instant.now();
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

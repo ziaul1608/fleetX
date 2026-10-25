@@ -59,10 +59,10 @@ class FlywayMigrationAndArchitectureTest {
     private AlertPublisher alertPublisher;
 
     @Test
-    @DisplayName("All 11 Flyway migrations (V100..V600) execute in order, pass Hibernate ddl-auto=validate, and restart with zero schema drift")
+    @DisplayName("All 12 Flyway migrations (V100..V601) execute in order, pass Hibernate ddl-auto=validate, and restart with zero schema drift")
     void flywayMigrationsAndRestartValidation() {
         MigrationInfo[] applied = flyway.info().applied();
-        assertThat(applied).hasSize(11);
+        assertThat(applied).hasSize(12);
 
         List<String> versions = Arrays.stream(applied)
                 .map(info -> info.getVersion().getVersion())
@@ -73,7 +73,7 @@ class FlywayMigrationAndArchitectureTest {
                 "300", "301",
                 "400", "401",
                 "500", "501",
-                "600"
+                "600", "601"
         );
 
         // Simulate application restart: re-running migrate and validate on existing schema

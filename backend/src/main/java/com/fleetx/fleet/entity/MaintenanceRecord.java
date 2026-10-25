@@ -16,7 +16,7 @@ public class MaintenanceRecord {
     private Long id;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
@@ -66,6 +66,16 @@ public class MaintenanceRecord {
         this.nextServiceDueDate = nextServiceDueDate;
         this.status = status != null ? status : "COMPLETED";
         this.createdAt = Instant.now();
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
     }
 
     public Long getId() { return id; }

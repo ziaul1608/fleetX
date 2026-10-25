@@ -18,7 +18,7 @@ public class ControlTowerKpi {
     private LocalDate snapshotDate;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(name = "active_vehicles", nullable = false)
     private Integer activeVehicles = 0;
@@ -37,6 +37,16 @@ public class ControlTowerKpi {
     private Instant generatedAt = Instant.now();
 
     public ControlTowerKpi() {}
+
+    @PrePersist
+    public void onPrePersist() {
+        if (generatedAt == null) {
+            generatedAt = Instant.now();
+        }
+        if (tenantId == null) {
+            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

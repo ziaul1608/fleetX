@@ -110,16 +110,23 @@ public class AuthService {
     @Transactional
     public OtpSentResponse sendLoginOtp(SendLoginOtpRequest request, HttpServletRequest httpRequest) {
         String normalizedEmail = request.email().trim().toLowerCase();
-        User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new DomainException("No account registered with email '" + normalizedEmail + "'. Please sign up first.",
-                        HttpStatus.NOT_FOUND, "USER_NOT_FOUND"));
-
-        if (!user.isActive()) {
-            throw new DomainException("Account has been deactivated. Please contact support.",
-                    HttpStatus.FORBIDDEN, "ACCOUNT_DEACTIVATED");
-        }
+        Optional<User> userOpt = userRepository.findByEmail(normalizedEmail);
 
         String clientIp = extractClientIp(httpRequest);
+
+        if (userOpt.isEmpty() || !userOpt.get().isActive()) {
+            auditService.recordEvent(null, "LOGIN_OTP_REQUESTED_UNKNOWN_OR_INACTIVE", "AUTH", null, clientIp,
+                    "{\"email\":\"" + normalizedEmail + "\"}");
+            return new OtpSentResponse(
+                    normalizedEmail,
+                    "LOGIN",
+                    OtpService.VALIDITY_SECONDS,
+                    OtpService.COOLDOWN_SECONDS,
+                    "If an account is associated with this email address, a verification code has been dispatched."
+            );
+        }
+
+        User user = userOpt.get();
         OtpSentResponse response = otpService.sendLoginOtp(request, clientIp, user.getFullName());
         auditService.recordEvent(user.getId(), "LOGIN_OTP_REQUESTED", "AUTH", user.getId(), clientIp,
                 "{\"email\":\"" + normalizedEmail + "\"}");
@@ -129,15 +136,22 @@ public class AuthService {
     @Transactional
     public UserResponseDto verifyLoginOtp(VerifyLoginOtpRequest request, HttpServletRequest httpRequest) {
         String normalizedEmail = request.email().trim().toLowerCase();
-        User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User with email '" + normalizedEmail + "' not found."));
 
-        if (!user.isActive()) {
-            throw new DomainException("Account has been deactivated.", HttpStatus.FORBIDDEN, "ACCOUNT_DEACTIVATED");
-        }
-
+        // 1. Verify OTP first (fails with INVALID_OTP_FORMAT, NO_ACTIVE_OTP, INCORRECT_OTP, OTP_EXPIRED, etc.)
         otpService.verifyOtp(normalizedEmail, "LOGIN", request.otp());
 
+        // 2. Fetch User
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new DomainException("Invalid credentials or account does not exist.",
+                        HttpStatus.BAD_REQUEST, "INVALID_CREDENTIALS"));
+
+        // 3. Verify Account Active Status
+        if (!user.isActive()) {
+            throw new DomainException("Account has been deactivated. Please contact support.",
+                    HttpStatus.FORBIDDEN, "ACCOUNT_DEACTIVATED");
+        }
+
+        // 4. Verify Tenant Active Status
         Tenant tenant = user.getTenantId() != null
                 ? tenantRepository.findById(user.getTenantId()).orElse(null)
                 : null;
@@ -156,47 +170,11 @@ public class AuthService {
 
     @Transactional
     public UserResponseDto login(LoginRequest request, HttpServletRequest httpRequest) {
-        String normalizedEmail = request.email().trim().toLowerCase();
-        String clientIp = extractClientIp(httpRequest);
-
-        Optional<User> userOpt = userRepository.findByEmail(normalizedEmail);
-        if (userOpt.isEmpty()) {
-            auditService.recordEvent(null, "USER_LOGIN_FAILED", "USER", null, clientIp,
-                    "{\"email\":\"" + normalizedEmail + "\",\"reason\":\"USER_NOT_FOUND\"}");
-            throw new BadCredentialsException("Invalid email or password credentials.");
-        }
-
-        User user = userOpt.get();
-
-        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            auditService.recordEvent(user.getId(), "USER_LOGIN_FAILED", "USER", user.getId(), clientIp,
-                    "{\"email\":\"" + normalizedEmail + "\",\"reason\":\"BAD_CREDENTIALS\"}");
-            throw new BadCredentialsException("Invalid email or password credentials.");
-        }
-
-        if (!user.isActive()) {
-            auditService.recordEvent(user.getId(), "USER_LOGIN_BLOCKED", "USER", user.getId(), clientIp,
-                    "{\"email\":\"" + normalizedEmail + "\",\"reason\":\"ACCOUNT_DEACTIVATED\"}");
-            throw new DomainException(
-                    "Account has been deactivated. Please contact your system administrator.",
-                    HttpStatus.FORBIDDEN,
-                    "ACCOUNT_DEACTIVATED"
-            );
-        }
-
-        Tenant tenant = user.getTenantId() != null
-                ? tenantRepository.findById(user.getTenantId()).orElse(null)
-                : null;
-        if (tenant != null && !"ACTIVE".equalsIgnoreCase(tenant.getStatus())) {
-            throw new DomainException("Organization account is suspended.", HttpStatus.FORBIDDEN, "TENANT_INACTIVE");
-        }
-
-        establishSecuritySession(user, tenant, httpRequest);
-
-        auditService.recordEvent(user.getId(), "USER_LOGIN_SUCCESS", "USER", user.getId(), clientIp,
-                "{\"sessionId\":\"" + httpRequest.getSession().getId() + "\"}");
-
-        return toUserResponseDto(user);
+        throw new DomainException(
+                "Password-only authentication has been retired. Please log in using your registered email and a 6-digit verification code.",
+                HttpStatus.BAD_REQUEST,
+                "PASSWORD_AUTH_RETIRED"
+        );
     }
 
     private void establishSecuritySession(User user, Tenant tenant, HttpServletRequest httpRequest) {
@@ -260,66 +238,10 @@ public class AuthService {
 
     @Transactional
     public void changePassword(PasswordChangeRequest request, Authentication authentication, HttpServletRequest httpRequest) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new BadCredentialsException("No authenticated session found.");
-        }
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User with email '" + email + "' not found."));
-
-        if (!user.isActive()) {
-            throw new DomainException(
-                    "Account has been deactivated. Access revoked.",
-                    HttpStatus.FORBIDDEN,
-                    "ACCOUNT_DEACTIVATED"
-            );
-        }
-
-        if (!request.newPassword().equals(request.confirmPassword())) {
-            throw new DomainException(
-                    "New password and confirm password do not match.",
-                    HttpStatus.BAD_REQUEST,
-                    "PASSWORD_MISMATCH"
-            );
-        }
-
-        String clientIp = extractClientIp(httpRequest);
-
-        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-            auditService.recordEvent(
-                    user.getId(),
-                    "USER_PASSWORD_CHANGE_FAILED",
-                    "USER",
-                    user.getId(),
-                    clientIp,
-                    "{\"email\":\"" + user.getEmail() + "\",\"reason\":\"INVALID_CURRENT_PASSWORD\"}"
-            );
-            throw new DomainException(
-                    "Current password is incorrect.",
-                    HttpStatus.BAD_REQUEST,
-                    "INVALID_CURRENT_PASSWORD"
-            );
-        }
-
-        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
-            throw new DomainException(
-                    "New password cannot be identical to current password.",
-                    HttpStatus.BAD_REQUEST,
-                    "PASSWORD_REUSE_PREVENTED"
-            );
-        }
-
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-        userRepository.save(user);
-
-        auditService.recordEvent(
-                user.getId(),
-                "USER_PASSWORD_CHANGED",
-                "USER",
-                user.getId(),
-                clientIp,
-                "{\"email\":\"" + user.getEmail() + "\"}"
+        throw new DomainException(
+                "Password management has been retired. FleetX uses passwordless Email OTP authentication.",
+                HttpStatus.BAD_REQUEST,
+                "PASSWORD_AUTH_RETIRED"
         );
     }
 

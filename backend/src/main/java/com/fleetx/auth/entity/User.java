@@ -14,7 +14,7 @@ public class User {
     private Long id;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L;
+    private Long tenantId;
 
     @Column(nullable = false, unique = true, length = 180)
     private String email;
@@ -56,6 +56,17 @@ public class User {
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = Instant.now();
+        }
+        this.updatedAt = Instant.now();
+        if (this.tenantId == null) {
+            this.tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        }
     }
 
     @PreUpdate
