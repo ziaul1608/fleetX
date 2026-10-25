@@ -43,20 +43,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   return (
     <aside className={`fx-sidebar ${collapsed ? 'collapsed' : ''}`} aria-label="Main Navigation">
       {/* Brand Header */}
-      <div className="d-flex align-items-center justify-content-between px-3 py-3 border-bottom">
+      <div
+        className="d-flex align-items-center justify-content-between px-3 py-3 border-bottom"
+        style={{ borderColor: 'rgba(232, 211, 162, 0.16)' }}
+      >
         <div className="d-flex align-items-center gap-2 overflow-hidden">
-          <div className="bg-primary text-white p-2 rounded d-flex align-items-center justify-content-center">
-            <Radio size={18} />
+          <div
+            className="p-2 rounded-2 d-flex align-items-center justify-content-center shadow-sm"
+            style={{
+              background: 'linear-gradient(135deg, #E8D3A2 0%, #C8753D 100%)',
+              color: '#201713',
+            }}
+          >
+            <Radio size={18} strokeWidth={2.5} />
           </div>
           {!collapsed && (
             <div>
-              <div className="fw-bold fs-6 lh-1 text-slate-900">FleetX</div>
-              <small className="text-muted" style={{ fontSize: '0.7rem' }}>Logistics Control</small>
+              <div className="fw-bold fs-6 lh-1" style={{ color: 'var(--fx-ivory-text)' }}>
+                FleetX
+              </div>
+              <small style={{ fontSize: '0.7rem', color: 'var(--fx-muted-sand)' }}>Logistics Control</small>
             </div>
           )}
         </div>
         <button
-          className="btn btn-sm btn-light border-0 p-1 text-muted"
+          className="btn btn-sm border-0 p-1"
+          style={{ background: 'transparent', color: 'var(--fx-muted-sand)' }}
           onClick={onToggle}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -72,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           <span className="label">Control Tower</span>
         </NavLink>
 
-        <div className="px-3 pt-3 pb-1 text-uppercase text-muted fw-bold" style={{ fontSize: '0.65rem' }}>
+        <div className="px-3 pt-3 pb-1 text-uppercase fw-bold" style={{ fontSize: '0.65rem', color: 'var(--fx-muted-sand)', letterSpacing: '0.05em' }}>
           {!collapsed && 'Assets & Operations'}
         </div>
 
@@ -102,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           </NavLink>
         )}
 
-        <div className="px-3 pt-3 pb-1 text-uppercase text-muted fw-bold" style={{ fontSize: '0.65rem' }}>
+        <div className="px-3 pt-3 pb-1 text-uppercase fw-bold" style={{ fontSize: '0.65rem', color: 'var(--fx-muted-sand)', letterSpacing: '0.05em' }}>
           {!collapsed && 'Logistics & Cargo'}
         </div>
 
@@ -120,7 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           </NavLink>
         )}
 
-        <div className="px-3 pt-3 pb-1 text-uppercase text-muted fw-bold" style={{ fontSize: '0.65rem' }}>
+        <div className="px-3 pt-3 pb-1 text-uppercase fw-bold" style={{ fontSize: '0.65rem', color: 'var(--fx-muted-sand)', letterSpacing: '0.05em' }}>
           {!collapsed && 'Intelligence & Admin'}
         </div>
 
@@ -141,8 +153,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
 
       {/* Footer Info */}
       {!collapsed && (
-        <div className="p-3 border-top bg-light text-muted small" style={{ fontSize: '0.75rem' }}>
-          <div><strong>Academic Year:</strong> 2026–27</div>
+        <div
+          className="p-3 border-top small"
+          style={{
+            borderColor: 'rgba(232, 211, 162, 0.16)',
+            fontSize: '0.75rem',
+            color: 'var(--fx-muted-sand)',
+            background: 'rgba(32, 23, 19, 0.4)',
+          }}
+        >
+          <div><strong style={{ color: 'var(--fx-ivory-text)' }}>Academic Year:</strong> 2026–27</div>
           <div>Phase 3 Integrated Security</div>
         </div>
       )}

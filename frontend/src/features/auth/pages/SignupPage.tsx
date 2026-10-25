@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   RefreshCw,
   ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../../../shared/context/AuthContext';
@@ -155,7 +156,7 @@ export const SignupPage: React.FC = () => {
     } catch (err: unknown) {
       const apiErr = err as { status?: number; errorCode?: string; message?: string };
       if (apiErr.errorCode === 'INCORRECT_OTP') {
-        setError(apiErr.message || 'Incorrect verification code. Please try again.');
+        setError(apiErr.message || 'Incorrect verification code. Attempts remaining: 3');
       } else if (apiErr.errorCode === 'OTP_EXPIRED') {
         setError('Verification code has expired. Please request a new code below.');
       } else if (apiErr.errorCode === 'MAX_ATTEMPTS_EXCEEDED') {
@@ -181,17 +182,40 @@ export const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="d-flex align-items-center justify-content-center min-vh-100 bg-light p-3">
-      <div className="card shadow-sm border-0 rounded-3 p-4" style={{ maxWidth: '480px', width: '100%', background: '#ffffff' }}>
+    <div
+      className="d-flex align-items-center justify-content-center min-vh-100 p-3 position-relative overflow-hidden"
+      style={{ background: 'var(--fx-espresso-bg)', color: 'var(--fx-ivory-text)' }}
+    >
+      {/* Ambient background glows */}
+      <div className="fx-glow-orb fx-glow-top-left" aria-hidden="true" />
+      <div className="fx-glow-orb fx-glow-bottom-right" aria-hidden="true" />
+
+      <div
+        className="fx-glass-panel p-4 p-sm-5 rounded-4 border shadow-lg position-relative"
+        style={{
+          maxWidth: '520px',
+          width: '100%',
+          borderColor: 'rgba(232, 211, 162, 0.28)',
+          zIndex: 1,
+        }}
+      >
         {/* Brand Header */}
         <div className="text-center mb-4">
           <Link to="/" className="text-decoration-none">
-            <div className="d-inline-flex bg-primary text-white p-3 rounded-circle mb-2 shadow-sm">
-              <Radio size={28} />
+            <div
+              className="d-inline-flex p-3 rounded-circle mb-3 shadow"
+              style={{
+                background: 'linear-gradient(135deg, #E8D3A2 0%, #C8753D 100%)',
+                color: '#201713',
+              }}
+            >
+              <Radio size={28} strokeWidth={2.5} />
             </div>
           </Link>
-          <h2 className="h4 fw-bold text-slate-900 mb-1">Launch Warehouse Workspace</h2>
-          <p className="text-muted small">
+          <h2 className="h4 fw-extrabold mb-1" style={{ color: 'var(--fx-ivory-text)', letterSpacing: '-0.02em' }}>
+            Launch Warehouse Workspace
+          </h2>
+          <p className="small mb-0" style={{ color: 'var(--fx-muted-sand)' }}>
             {step === 'DETAILS'
               ? 'Multi-Tenant Logistics SaaS • Dedicated Private Partition'
               : `Enter 6-digit code sent to ${email}`}
@@ -216,11 +240,18 @@ export const SignupPage: React.FC = () => {
           /* STEP 1: Registration Form */
           <form onSubmit={handleSendOtp}>
             <div className="mb-3">
-              <label className="form-label small fw-medium text-secondary" htmlFor="signup-company">
+              <label className="form-label small fw-medium d-block mb-1" htmlFor="signup-company" style={{ color: 'var(--fx-ivory-text)' }}>
                 Company / Organization Name <span className="text-danger">*</span>
               </label>
               <div className="input-group input-group-sm">
-                <span className="input-group-text bg-light text-muted">
+                <span
+                  className="input-group-text border-end-0"
+                  style={{
+                    background: 'rgba(32, 23, 19, 0.65)',
+                    borderColor: 'rgba(232, 211, 162, 0.22)',
+                    color: 'var(--fx-muted-sand)',
+                  }}
+                >
                   <Building2 size={14} />
                 </span>
                 <input
@@ -236,11 +267,18 @@ export const SignupPage: React.FC = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label small fw-medium text-secondary" htmlFor="signup-warehouse">
+              <label className="form-label small fw-medium d-block mb-1" htmlFor="signup-warehouse" style={{ color: 'var(--fx-ivory-text)' }}>
                 Warehouse / Central Depot Name <span className="text-danger">*</span>
               </label>
               <div className="input-group input-group-sm">
-                <span className="input-group-text bg-light text-muted">
+                <span
+                  className="input-group-text border-end-0"
+                  style={{
+                    background: 'rgba(32, 23, 19, 0.65)',
+                    borderColor: 'rgba(232, 211, 162, 0.22)',
+                    color: 'var(--fx-muted-sand)',
+                  }}
+                >
                   <Warehouse size={14} />
                 </span>
                 <input
@@ -256,11 +294,18 @@ export const SignupPage: React.FC = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label small fw-medium text-secondary" htmlFor="signup-name">
+              <label className="form-label small fw-medium d-block mb-1" htmlFor="signup-name" style={{ color: 'var(--fx-ivory-text)' }}>
                 Owner / Manager Full Name <span className="text-danger">*</span>
               </label>
               <div className="input-group input-group-sm">
-                <span className="input-group-text bg-light text-muted">
+                <span
+                  className="input-group-text border-end-0"
+                  style={{
+                    background: 'rgba(32, 23, 19, 0.65)',
+                    borderColor: 'rgba(232, 211, 162, 0.22)',
+                    color: 'var(--fx-muted-sand)',
+                  }}
+                >
                   <User size={14} />
                 </span>
                 <input
@@ -276,11 +321,18 @@ export const SignupPage: React.FC = () => {
             </div>
 
             <div className="mb-4">
-              <label className="form-label small fw-medium text-secondary" htmlFor="signup-email">
+              <label className="form-label small fw-medium d-block mb-1" htmlFor="signup-email" style={{ color: 'var(--fx-ivory-text)' }}>
                 Work Email Address <span className="text-danger">*</span>
               </label>
               <div className="input-group input-group-sm">
-                <span className="input-group-text bg-light text-muted">
+                <span
+                  className="input-group-text border-end-0"
+                  style={{
+                    background: 'rgba(32, 23, 19, 0.65)',
+                    borderColor: 'rgba(232, 211, 162, 0.22)',
+                    color: 'var(--fx-muted-sand)',
+                  }}
+                >
                   <Mail size={14} />
                 </span>
                 <input
@@ -294,14 +346,14 @@ export const SignupPage: React.FC = () => {
                   autoComplete="email"
                 />
               </div>
-              <small className="text-muted" style={{ fontSize: '0.72rem' }}>
+              <small className="d-block mt-1" style={{ fontSize: '0.72rem', color: 'var(--fx-muted-sand)' }}>
                 We will email a 6-digit verification code to this address.
               </small>
             </div>
 
             <button
               type="submit"
-              className="btn btn-primary w-100 btn-sm py-2 fw-medium d-flex align-items-center justify-content-center gap-2"
+              className="btn fx-btn-gold w-100 btn-sm py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2 shadow"
               disabled={loading}
             >
               {loading ? (
@@ -311,6 +363,7 @@ export const SignupPage: React.FC = () => {
                 </>
               ) : (
                 <>
+                  <Sparkles size={15} />
                   <span>Send Verification Code</span>
                   <ArrowRight size={14} />
                 </>
@@ -321,7 +374,7 @@ export const SignupPage: React.FC = () => {
           /* STEP 2: OTP Verification Form */
           <form onSubmit={handleVerifyOtp}>
             <div className="mb-4 text-center">
-              <label className="form-label small fw-medium text-secondary d-block mb-2" htmlFor="signup-otp">
+              <label className="form-label small fw-medium d-block mb-2" htmlFor="signup-otp" style={{ color: 'var(--fx-ivory-text)' }}>
                 Enter 6-Digit Verification Code
               </label>
               <div className="d-flex justify-content-center mb-2">
@@ -339,7 +392,7 @@ export const SignupPage: React.FC = () => {
                   required
                 />
               </div>
-              <div className="d-flex align-items-center justify-content-between small text-muted px-2">
+              <div className="d-flex align-items-center justify-content-between small px-2" style={{ color: 'var(--fx-muted-sand)' }}>
                 <span>Code expires in 5 minutes</span>
                 {cooldown > 0 ? (
                   <span>Resend in {cooldown}s</span>
@@ -347,7 +400,8 @@ export const SignupPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleResendOtp}
-                    className="btn btn-link p-0 text-primary small text-decoration-none d-flex align-items-center gap-1"
+                    className="btn btn-link p-0 small text-decoration-none d-flex align-items-center gap-1"
+                    style={{ color: 'var(--fx-champagne-gold)' }}
                     disabled={loading}
                   >
                     <RefreshCw size={12} /> Resend Code
@@ -358,7 +412,7 @@ export const SignupPage: React.FC = () => {
 
             <button
               type="submit"
-              className="btn btn-primary w-100 btn-sm py-2 fw-medium d-flex align-items-center justify-content-center gap-2 mb-3"
+              className="btn fx-btn-gold w-100 btn-sm py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2 mb-3 shadow"
               disabled={loading || otp.length !== 6}
             >
               {loading ? (
@@ -376,7 +430,7 @@ export const SignupPage: React.FC = () => {
 
             <button
               type="button"
-              className="btn btn-outline-secondary w-100 btn-sm py-1 d-flex align-items-center justify-content-center gap-1"
+              className="btn fx-btn-glass w-100 btn-sm py-1.5 d-flex align-items-center justify-content-center gap-1"
               onClick={() => {
                 setStep('DETAILS');
                 setOtp('');
@@ -392,15 +446,18 @@ export const SignupPage: React.FC = () => {
         )}
 
         {/* Footer links */}
-        <div className="mt-4 pt-3 border-top text-center text-muted small" style={{ fontSize: '0.78rem' }}>
+        <div
+          className="mt-4 pt-3 border-top text-center small"
+          style={{ borderColor: 'rgba(232, 211, 162, 0.16)', fontSize: '0.8rem', color: 'var(--fx-muted-sand)' }}
+        >
           <div>
             Already have an account?{' '}
-            <Link to="/login" className="text-primary fw-medium text-decoration-none">
+            <Link to="/login" className="fw-semibold text-decoration-none" style={{ color: 'var(--fx-champagne-gold)' }}>
               Sign In
             </Link>
           </div>
-          <div className="mt-2 d-flex align-items-center justify-content-center gap-1 text-secondary" style={{ fontSize: '0.72rem' }}>
-            <ShieldCheck size={13} className="text-success" />
+          <div className="mt-2 d-flex align-items-center justify-content-center gap-1" style={{ fontSize: '0.72rem' }}>
+            <ShieldCheck size={13} style={{ color: '#8CE3A7' }} />
             <span>Cryptographic SHA-256 OTP • Zero-Leakage Tenancy</span>
           </div>
         </div>

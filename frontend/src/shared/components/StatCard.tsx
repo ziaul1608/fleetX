@@ -16,7 +16,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon
     <div className="fx-stat-card">
       <div className="fx-stat-header">
         <span className="fx-stat-title">{title}</span>
-        {icon && <div className="text-muted">{icon}</div>}
+        {icon && <div style={{ color: 'var(--fx-champagne-gold)' }}>{icon}</div>}
       </div>
       <div className="fx-stat-value">{value}</div>
       {(subtitle || trend) && (

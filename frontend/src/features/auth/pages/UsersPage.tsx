@@ -133,7 +133,7 @@ export const UsersPage: React.FC = () => {
         subtitle="Manage administrative accounts, role-based authorities, credentials, and user lifecycle states."
       >
         <button
-          className="btn btn-primary btn-sm d-flex align-items-center gap-2"
+          className="btn fx-btn-gold btn-sm d-flex align-items-center gap-2 shadow"
           onClick={() => setIsCreateOpen(true)}
         >
           <Plus size={16} /> Provision User

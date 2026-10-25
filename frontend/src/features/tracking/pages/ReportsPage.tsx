@@ -85,37 +85,37 @@ export const ReportsPage: React.FC = () => {
   };
 
   return (
-    <div className="container-fluid py-3 text-light">
+    <div className="container-fluid py-3" style={{ color: 'var(--fx-ivory-text)' }}>
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
           <div className="d-flex align-items-center gap-2">
-            <FileSpreadsheet size={24} className="text-info" />
-            <h2 className="h4 fw-bold mb-0">
+            <FileSpreadsheet size={24} style={{ color: 'var(--fx-champagne-gold)' }} />
+            <h2 className="h4 fw-bold mb-0" style={{ color: 'var(--fx-ivory-text)', letterSpacing: '-0.02em' }}>
               Operational Summary Reports &amp; Safe CSV Export
             </h2>
           </div>
-          <p className="text-secondary small mb-0 mt-1">
+          <p className="small mb-0 mt-1" style={{ color: 'var(--fx-muted-sand)' }}>
             Query actual persisted operational data with date/status filters and export RFC 4180 compliant CSV files
           </p>
         </div>
 
         <Link
           to="/tracking/map"
-          className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+          className="btn fx-btn-glass btn-sm d-inline-flex align-items-center gap-1"
         >
           <ArrowLeft size={15} /> Back to Control Tower
         </Link>
       </div>
 
       {error && (
-        <div className="alert alert-danger py-2 small mb-3" role="alert">
+        <div className="alert alert-danger py-2 small mb-3 shadow-sm" role="alert">
           {error}
         </div>
       )}
 
       {downloadSuccess && (
         <div
-          className="alert alert-success py-2 small mb-3 d-flex align-items-center gap-2"
+          className="alert alert-success py-2 small mb-3 d-flex align-items-center gap-2 shadow-sm"
           role="status"
         >
           <CheckCircle2 size={16} /> RFC 4180 CSV report downloaded successfully.
@@ -124,20 +124,20 @@ export const ReportsPage: React.FC = () => {
 
       {/* Filter & Export Controls */}
       <div
-        className="p-3 rounded-3 border mb-4"
+        className="p-3 rounded-3 border mb-4 fx-glass-panel"
         style={{
-          background: 'rgba(13, 20, 38, 0.85)',
-          borderColor: 'rgba(56, 189, 248, 0.25)',
+          background: 'rgba(48, 33, 28, 0.85)',
+          borderColor: 'rgba(232, 211, 162, 0.22)',
         }}
       >
         <div className="row g-3 align-items-end">
           <div className="col-md-3">
-            <label className="form-label small text-secondary" htmlFor="report-type">
+            <label className="form-label small fw-medium" htmlFor="report-type" style={{ color: 'var(--fx-ivory-text)' }}>
               Report Domain Category
             </label>
             <select
               id="report-type"
-              className="form-select form-select-sm bg-dark text-light border-secondary"
+              className="form-select form-select-sm"
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
             >
@@ -151,40 +151,40 @@ export const ReportsPage: React.FC = () => {
           </div>
 
           <div className="col-md-2">
-            <label className="form-label small text-secondary" htmlFor="start-date">
-              <Calendar size={13} className="me-1" /> Start Date
+            <label className="form-label small fw-medium" htmlFor="start-date" style={{ color: 'var(--fx-ivory-text)' }}>
+              <Calendar size={13} className="me-1" style={{ color: 'var(--fx-champagne-gold)' }} /> Start Date
             </label>
             <input
               id="start-date"
               type="date"
-              className="form-control form-control-sm bg-dark text-light border-secondary"
+              className="form-control form-control-sm"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
 
           <div className="col-md-2">
-            <label className="form-label small text-secondary" htmlFor="end-date">
-              <Calendar size={13} className="me-1" /> End Date
+            <label className="form-label small fw-medium" htmlFor="end-date" style={{ color: 'var(--fx-ivory-text)' }}>
+              <Calendar size={13} className="me-1" style={{ color: 'var(--fx-champagne-gold)' }} /> End Date
             </label>
             <input
               id="end-date"
               type="date"
-              className="form-control form-control-sm bg-dark text-light border-secondary"
+              className="form-control form-control-sm"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
 
           <div className="col-md-2">
-            <label className="form-label small text-secondary" htmlFor="status-filter">
-              <Filter size={13} className="me-1" /> Status / Severity Filter
+            <label className="form-label small fw-medium" htmlFor="status-filter" style={{ color: 'var(--fx-ivory-text)' }}>
+              <Filter size={13} className="me-1" style={{ color: 'var(--fx-champagne-gold)' }} /> Status / Severity Filter
             </label>
             <input
               id="status-filter"
               type="text"
               placeholder="e.g., COMPLETED, WARNING"
-              className="form-control form-control-sm bg-dark text-light border-secondary"
+              className="form-control form-control-sm"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             />
@@ -193,7 +193,7 @@ export const ReportsPage: React.FC = () => {
           <div className="col-md-3 d-flex gap-2">
             <button
               type="button"
-              className="btn btn-outline-info btn-sm d-inline-flex align-items-center gap-1"
+              className="btn fx-btn-glass btn-sm d-inline-flex align-items-center gap-1"
               onClick={loadReport}
               disabled={loading}
             >
@@ -201,7 +201,7 @@ export const ReportsPage: React.FC = () => {
             </button>
             <button
               type="button"
-              className="btn btn-info btn-sm text-dark fw-semibold flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1"
+              className="btn fx-btn-gold btn-sm fw-bold flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1 shadow"
               onClick={handleDownloadCsv}
               disabled={downloading}
             >
@@ -214,18 +214,18 @@ export const ReportsPage: React.FC = () => {
 
       {/* Persisted Report Preview Table */}
       <div
-        className="rounded-3 border overflow-hidden"
+        className="rounded-3 border overflow-hidden fx-glass-panel"
         style={{
-          background: 'rgba(13, 20, 38, 0.85)',
-          borderColor: 'rgba(148, 163, 184, 0.16)',
+          background: 'rgba(48, 33, 28, 0.85)',
+          borderColor: 'rgba(232, 211, 162, 0.22)',
         }}
       >
-        <div className="px-3 py-2 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center small">
-          <span className="fw-semibold text-info">
+        <div className="px-3 py-2.5 border-bottom d-flex justify-content-between align-items-center small" style={{ borderColor: 'rgba(232, 211, 162, 0.16)' }}>
+          <span className="fw-semibold" style={{ color: 'var(--fx-champagne-gold)' }}>
             Persisted Database Records — {reportSummary?.reportType || reportType} (
             {reportSummary?.totalRecords ?? 0} matching rows)
           </span>
-          <span className="text-secondary">
+          <span style={{ color: 'var(--fx-muted-sand)' }}>
             Generated:{' '}
             {reportSummary?.generatedAt
               ? new Date(reportSummary.generatedAt).toLocaleString()
@@ -234,9 +234,9 @@ export const ReportsPage: React.FC = () => {
         </div>
 
         <div className="table-responsive">
-          <table className="table table-dark table-hover table-sm align-middle mb-0">
+          <table className="fx-table align-middle mb-0">
             <thead>
-              <tr className="text-secondary small">
+              <tr>
                 {(reportSummary?.columns ?? []).map((col) => (
                   <th key={col}>{col}</th>
                 ))}
@@ -256,7 +256,8 @@ export const ReportsPage: React.FC = () => {
                 <tr>
                   <td
                     colSpan={Math.max(1, reportSummary?.columns?.length ?? 1)}
-                    className="text-center py-5 text-secondary"
+                    className="text-center py-5"
+                    style={{ color: 'var(--fx-muted-sand)' }}
                   >
                     No persisted records found in the database for the selected domain, date range, and status filter.
                   </td>

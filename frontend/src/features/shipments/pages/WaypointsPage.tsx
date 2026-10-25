@@ -186,24 +186,24 @@ export const WaypointsPage: React.FC = () => {
   };
 
   return (
-    <div className="container-fluid py-3 text-light">
+    <div className="container-fluid py-3" style={{ color: 'var(--fx-ivory-text)' }}>
       {/* Header */}
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
           <div className="d-flex align-items-center gap-2">
-            <Compass size={24} className="text-info" />
-            <h2 className="h4 fw-bold mb-0">
-              Route Planning & Waypoint Estimator
+            <Compass size={24} style={{ color: 'var(--fx-champagne-gold)' }} />
+            <h2 className="h4 fw-bold mb-0" style={{ color: 'var(--fx-ivory-text)', letterSpacing: '-0.02em' }}>
+              Route Planning &amp; Waypoint Estimator
             </h2>
           </div>
-          <p className="text-secondary small mb-0 mt-1">
+          <p className="small mb-0 mt-1" style={{ color: 'var(--fx-muted-sand)' }}>
             Configure ordered waypoints and compute Haversine straight-line distance and constant-speed ETA estimates
           </p>
         </div>
 
         <Link
           to="/shipments"
-          className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+          className="btn fx-btn-glass btn-sm d-inline-flex align-items-center gap-1"
         >
           <ArrowLeft size={15} /> Back to Shipment Manifests
         </Link>

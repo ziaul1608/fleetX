@@ -108,15 +108,17 @@ export const ShipmentsPage: React.FC = () => {
   const delayedCount = shipments.filter((s) => s.delayed || s.status === 'DELAYED').length;
 
   return (
-    <div className="container-fluid py-3 text-light">
+    <div className="container-fluid py-3" style={{ color: 'var(--fx-ivory-text)' }}>
       {/* Header */}
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
           <div className="d-flex align-items-center gap-2">
-            <Package size={24} className="text-info" />
-            <h2 className="h4 fw-bold mb-0">Shipment & Consignment Manifests</h2>
+            <Package size={24} style={{ color: 'var(--fx-champagne-gold)' }} />
+            <h2 className="h4 fw-bold mb-0" style={{ color: 'var(--fx-ivory-text)', letterSpacing: '-0.02em' }}>
+              Shipment &amp; Consignment Manifests
+            </h2>
           </div>
-          <p className="text-secondary small mb-0 mt-1">
+          <p className="small mb-0 mt-1" style={{ color: 'var(--fx-muted-sand)' }}>
             Manage consignment lifecycle, trip associations, Haversine route distance estimates, and delivery timelines
           </p>
         </div>
@@ -124,9 +126,9 @@ export const ShipmentsPage: React.FC = () => {
         <div className="d-flex flex-wrap gap-2">
           <Link
             to="/shipments/waypoints"
-            className="btn btn-outline-info btn-sm d-inline-flex align-items-center gap-1"
+            className="btn fx-btn-glass btn-sm d-inline-flex align-items-center gap-1"
           >
-            <Compass size={16} /> Route & Waypoint Planner
+            <Compass size={16} /> Route &amp; Waypoint Planner
           </Link>
           <button
             type="button"
@@ -137,7 +139,7 @@ export const ShipmentsPage: React.FC = () => {
           </button>
           <button
             type="button"
-            className="btn btn-info btn-sm text-dark fw-semibold d-inline-flex align-items-center gap-1"
+            className="btn fx-btn-gold btn-sm fw-bold d-inline-flex align-items-center gap-1 shadow"
             onClick={() => setIsCreateOpen(true)}
           >
             <PackagePlus size={16} /> New Shipment
@@ -149,69 +151,69 @@ export const ShipmentsPage: React.FC = () => {
       <div className="row g-3 mb-4">
         <div className="col-sm-6 col-xl-3">
           <div
-            className="p-3 rounded-3 border h-100"
+            className="p-3 rounded-3 border h-100 fx-glass-card"
             style={{
-              background: 'rgba(13, 20, 38, 0.78)',
-              borderColor: 'rgba(56, 189, 248, 0.22)',
+              background: 'rgba(48, 33, 28, 0.78)',
+              borderColor: 'rgba(232, 211, 162, 0.22)',
             }}
           >
             <div className="d-flex justify-content-between align-items-center">
-              <span className="small text-secondary">Total Shipments</span>
-              <Package size={18} className="text-info" />
+              <span className="small" style={{ color: 'var(--fx-muted-sand)' }}>Total Shipments</span>
+              <Package size={18} style={{ color: 'var(--fx-champagne-gold)' }} />
             </div>
-            <div className="fs-3 fw-bold mt-1">{totalElements}</div>
-            <div className="small text-secondary">Registered manifests</div>
+            <div className="fs-3 fw-bold mt-1" style={{ color: 'var(--fx-ivory-text)' }}>{totalElements}</div>
+            <div className="small" style={{ color: 'var(--fx-muted-sand)' }}>Registered manifests</div>
           </div>
         </div>
 
         <div className="col-sm-6 col-xl-3">
           <div
-            className="p-3 rounded-3 border h-100"
+            className="p-3 rounded-3 border h-100 fx-glass-card"
             style={{
-              background: 'rgba(13, 20, 38, 0.78)',
-              borderColor: 'rgba(56, 189, 248, 0.22)',
+              background: 'rgba(48, 33, 28, 0.78)',
+              borderColor: 'rgba(232, 211, 162, 0.22)',
             }}
           >
             <div className="d-flex justify-content-between align-items-center">
-              <span className="small text-secondary">Active In-Transit</span>
-              <Truck size={18} className="text-primary" />
+              <span className="small" style={{ color: 'var(--fx-muted-sand)' }}>Active In-Transit</span>
+              <Truck size={18} style={{ color: 'var(--fx-burnt-amber)' }} />
             </div>
-            <div className="fs-3 fw-bold mt-1 text-info">{inTransitCount}</div>
-            <div className="small text-secondary">Picked up / In transit / Out for delivery</div>
+            <div className="fs-3 fw-bold mt-1" style={{ color: 'var(--fx-champagne-gold)' }}>{inTransitCount}</div>
+            <div className="small" style={{ color: 'var(--fx-muted-sand)' }}>Picked up / In transit / Out for delivery</div>
           </div>
         </div>
 
         <div className="col-sm-6 col-xl-3">
           <div
-            className="p-3 rounded-3 border h-100"
+            className="p-3 rounded-3 border h-100 fx-glass-card"
             style={{
-              background: 'rgba(13, 20, 38, 0.78)',
-              borderColor: 'rgba(16, 185, 129, 0.28)',
+              background: 'rgba(48, 33, 28, 0.78)',
+              borderColor: 'rgba(92, 184, 122, 0.28)',
             }}
           >
             <div className="d-flex justify-content-between align-items-center">
-              <span className="small text-secondary">Completed Deliveries</span>
-              <CheckCircle2 size={18} className="text-success" />
+              <span className="small" style={{ color: 'var(--fx-muted-sand)' }}>Completed Deliveries</span>
+              <CheckCircle2 size={18} style={{ color: '#8CE3A7' }} />
             </div>
-            <div className="fs-3 fw-bold mt-1 text-success">{deliveredCount}</div>
-            <div className="small text-secondary">Confirmed PODs on current page</div>
+            <div className="fs-3 fw-bold mt-1" style={{ color: '#8CE3A7' }}>{deliveredCount}</div>
+            <div className="small" style={{ color: 'var(--fx-muted-sand)' }}>Confirmed PODs on current page</div>
           </div>
         </div>
 
         <div className="col-sm-6 col-xl-3">
           <div
-            className="p-3 rounded-3 border h-100"
+            className="p-3 rounded-3 border h-100 fx-glass-card"
             style={{
-              background: 'rgba(13, 20, 38, 0.78)',
-              borderColor: 'rgba(239, 68, 68, 0.3)',
+              background: 'rgba(48, 33, 28, 0.78)',
+              borderColor: 'rgba(224, 108, 117, 0.3)',
             }}
           >
             <div className="d-flex justify-content-between align-items-center">
-              <span className="small text-secondary">Delayed / Overdue</span>
-              <AlertTriangle size={18} className="text-danger" />
+              <span className="small" style={{ color: 'var(--fx-muted-sand)' }}>Delayed / Overdue</span>
+              <AlertTriangle size={18} style={{ color: '#FFA4AC' }} />
             </div>
-            <div className="fs-3 fw-bold mt-1 text-danger">{delayedCount}</div>
-            <div className="small text-secondary">Past promised delivery time</div>
+            <div className="fs-3 fw-bold mt-1" style={{ color: '#FFA4AC' }}>{delayedCount}</div>
+            <div className="small" style={{ color: 'var(--fx-muted-sand)' }}>Past promised delivery time</div>
           </div>
         </div>
       </div>
