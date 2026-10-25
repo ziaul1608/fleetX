@@ -29,5 +29,51 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns(allowedOrigins)
                 .withSockJS();
     }
+
+    @Override
+    public void configureClientInboundChannel(org.springframework.messaging.simp.config.ChannelRegistration registration) {
+        registration.interceptors(new org.springframework.messaging.support.ChannelInterceptor() {
+            @Override
+            public org.springframework.messaging.Message<?> preSend(
+                    org.springframework.messaging.Message<?> message,
+                    org.springframework.messaging.MessageChannel channel
+            ) {
+                org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor =
+                        org.springframework.messaging.support.MessageHeaderAccessor.getAccessor(
+                                message, org.springframework.messaging.simp.stomp.StompHeaderAccessor.class);
+
+                if (accessor != null && org.springframework.messaging.simp.stomp.StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+                    String destination = accessor.getDestination();
+                    if (destination != null) {
+                        java.security.Principal principal = accessor.getUser();
+                        Long principalTenantId = null;
+                        if (principal instanceof org.springframework.security.core.Authentication auth
+                                && auth.getPrincipal() instanceof com.fleetx.auth.security.FleetxUserPrincipal userPrincipal) {
+                            principalTenantId = userPrincipal.getTenantId();
+                        }
+
+                        // Validate tenant-partitioned destination: /topic/tenants/{tenantId}/**
+                        if (destination.startsWith("/topic/tenants/")) {
+                            String[] parts = destination.split("/");
+                            if (parts.length >= 4) {
+                                try {
+                                    Long requestedTenantId = Long.parseLong(parts[3]);
+                                    if (principalTenantId == null || !principalTenantId.equals(requestedTenantId)) {
+                                        throw new IllegalArgumentException("Cross-tenant WebSocket subscription denied.");
+                                    }
+                                } catch (NumberFormatException ignored) {}
+                            }
+                        } else if ("/topic/alerts".equals(destination) || "/topic/fleet-locations".equals(destination)) {
+                            // Non-legacy tenants are prohibited from subscribing to global unpartitioned topics
+                            if (principalTenantId != null && principalTenantId != 1L) {
+                                throw new IllegalArgumentException("Global broadcast subscription restricted. Subscribe to /topic/tenants/{tenantId}/... instead.");
+                            }
+                        }
+                    }
+                }
+                return message;
+            }
+        });
+    }
 }
 

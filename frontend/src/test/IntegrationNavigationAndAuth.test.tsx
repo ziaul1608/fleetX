@@ -57,7 +57,7 @@ describe('Phase 7 — Frontend Route Registration, Auth Header & Logout Integrat
       currentUser: mockAdminUser,
     });
 
-    expect(screen.getByRole('link', { name: /Control Tower/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: /Control Tower/i })).toHaveAttribute('href', '/dashboard');
     expect(screen.getByRole('link', { name: /Fleet Inventory/i })).toHaveAttribute('href', '/fleet/vehicles');
     expect(screen.getByRole('link', { name: /Maintenance & Logs/i })).toHaveAttribute('href', '/fleet/maintenance');
     expect(screen.getByRole('link', { name: /Drivers & Rosters/i })).toHaveAttribute('href', '/trips/drivers');

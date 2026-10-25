@@ -11,6 +11,9 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @Column(name = "user_id")
     private Long userId;
 
@@ -34,7 +37,25 @@ public class AuditLog {
 
     public AuditLog() {}
 
+    @PrePersist
+    public void onPrePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "AuditLog");
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "AuditLog");
+    }
+
     public AuditLog(Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
+        this(null, userId, action, entityType, entityId, ipAddress, detailsJson);
+    }
+
+    public AuditLog(Long tenantId, Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
+        this.tenantId = tenantId;
         this.userId = userId;
         this.action = action;
         this.entityType = entityType;
@@ -46,6 +67,9 @@ public class AuditLog {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }

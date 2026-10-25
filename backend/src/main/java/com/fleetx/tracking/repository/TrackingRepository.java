@@ -14,26 +14,27 @@ import java.util.Optional;
 @Repository
 public interface TrackingRepository extends JpaRepository<TrackingLog, Long> {
 
-    List<TrackingLog> findByVehicleIdOrderByRecordedAtDesc(Long vehicleId);
+    List<TrackingLog> findByVehicleIdAndTenantIdOrderByRecordedAtDesc(Long vehicleId, Long tenantId);
 
-    List<TrackingLog> findByVehicleIdOrderByRecordedAtDesc(Long vehicleId, Pageable pageable);
+    List<TrackingLog> findByVehicleIdAndTenantIdOrderByRecordedAtDesc(Long vehicleId, Long tenantId, Pageable pageable);
 
-    Optional<TrackingLog> findFirstByVehicleIdOrderByRecordedAtDesc(Long vehicleId);
+    Optional<TrackingLog> findFirstByVehicleIdAndTenantIdOrderByRecordedAtDesc(Long vehicleId, Long tenantId);
 
-    List<TrackingLog> findByTripIdOrderByRecordedAtAsc(Long tripId);
+    List<TrackingLog> findByTripIdAndTenantIdOrderByRecordedAtAsc(Long tripId, Long tenantId);
 
-    long countByVehicleId(Long vehicleId);
+    long countByVehicleIdAndTenantId(Long vehicleId, Long tenantId);
 
     @Query("""
             SELECT t FROM TrackingLog t
-            WHERE t.id IN (
-                SELECT MAX(t2.id) FROM TrackingLog t2 GROUP BY t2.vehicleId
+            WHERE t.tenantId = :tenantId
+              AND t.id IN (
+                SELECT MAX(t2.id) FROM TrackingLog t2 WHERE t2.tenantId = :tenantId GROUP BY t2.vehicleId
             )
             ORDER BY t.recordedAt DESC
             """)
-    List<TrackingLog> findLatestPingPerVehicle();
+    List<TrackingLog> findLatestPingPerVehicle(@Param("tenantId") Long tenantId);
 
     @Modifying
-    @Query("DELETE FROM TrackingLog t WHERE t.vehicleId = :vehicleId AND t.id NOT IN :keepIds")
-    void deleteByVehicleIdAndIdNotIn(@Param("vehicleId") Long vehicleId, @Param("keepIds") List<Long> keepIds);
+    @Query("DELETE FROM TrackingLog t WHERE t.vehicleId = :vehicleId AND t.tenantId = :tenantId AND t.id NOT IN :keepIds")
+    void deleteByVehicleIdAndTenantIdAndIdNotIn(@Param("vehicleId") Long vehicleId, @Param("tenantId") Long tenantId, @Param("keepIds") List<Long> keepIds);
 }

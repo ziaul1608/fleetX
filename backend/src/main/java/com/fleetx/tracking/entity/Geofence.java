@@ -16,6 +16,9 @@ public class Geofence {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @JdbcTypeCode(SqlTypes.DECIMAL)
     @Column(name = "center_latitude", nullable = false)
     private Double centerLatitude;
@@ -49,6 +52,19 @@ public class Geofence {
 
     public Geofence() {}
 
+    @PrePersist
+    public void onPrePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "Geofence");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "Geofence");
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -81,4 +97,7 @@ public class Geofence {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

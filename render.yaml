@@ -48,3 +48,12 @@ services:
         sync: false
       - key: BOOTSTRAP_ADMIN_PASSWORD_OVERRIDE
         sync: false
+
+      # Production HTTPS Transactional Email Delivery (Resend REST API)
+      # Bypasses Render outbound SMTP port blocking (ports 25, 465, 587)
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FLEETX_MAIL_FROM
+        sync: false
+      - key: FLEETX_OTP_HMAC_SECRET
+        generateValue: true

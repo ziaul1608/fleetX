@@ -15,6 +15,9 @@ public class MaintenanceRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
@@ -65,6 +68,19 @@ public class MaintenanceRecord {
         this.createdAt = Instant.now();
     }
 
+    @PrePersist
+    public void onPrePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "MaintenanceRecord");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "MaintenanceRecord");
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -97,4 +113,7 @@ public class MaintenanceRecord {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

@@ -27,11 +27,27 @@ public class AuditService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordEvent(Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
+        recordEvent(null, userId, action, entityType, entityId, ipAddress, detailsJson);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordEvent(Long explicitTenantId, Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
         try {
-            AuditLog auditLog = new AuditLog(userId, action, entityType, entityId, ipAddress, detailsJson);
-            auditLogRepository.save(auditLog);
-            log.info("[AUDIT] Action: {} | User: #{} | Entity: {} #{} | IP: {}",
-                    action, userId, entityType, entityId, ipAddress);
+            Long tenantId = explicitTenantId != null
+                    ? explicitTenantId
+                    : com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(null);
+
+            if (tenantId != null) {
+                com.fleetx.shared.context.TenantSecurityContext.runWithTenant(tenantId, () -> {
+                    AuditLog auditLog = new AuditLog(tenantId, userId, action, entityType, entityId, ipAddress, detailsJson);
+                    auditLogRepository.save(auditLog);
+                });
+                log.info("[AUDIT] Tenant: #{} | Action: {} | User: #{} | Entity: {} #{} | IP: {}",
+                        tenantId, action, userId, entityType, entityId, ipAddress);
+            } else {
+                log.info("[SYSTEM AUDIT] Action: {} | User: #{} | Entity: {} #{} | IP: {} | Details: {}",
+                        action, userId, entityType, entityId, ipAddress, detailsJson);
+            }
         } catch (Exception ex) {
             log.error("[AUDIT ERROR] Failed to persist audit log for action: " + action, ex);
         }
@@ -39,13 +55,14 @@ public class AuditService {
 
     @Transactional(readOnly = true)
     public PageResponse<AuditLogResponseDto> getAuditLogs(String action, Long userId, Pageable pageable) {
+        Long tenantId = com.fleetx.shared.context.TenantSecurityContext.getCurrentTenantId();
         Page<AuditLog> page;
         if (action != null && !action.isBlank()) {
-            page = auditLogRepository.findByActionOrderByCreatedAtDesc(action.trim().toUpperCase(), pageable);
+            page = auditLogRepository.findByTenantIdAndActionOrderByCreatedAtDesc(tenantId, action.trim().toUpperCase(), pageable);
         } else if (userId != null) {
-            page = auditLogRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+            page = auditLogRepository.findByTenantIdAndUserIdOrderByCreatedAtDesc(tenantId, userId, pageable);
         } else {
-            page = auditLogRepository.findAllByOrderByCreatedAtDesc(pageable);
+            page = auditLogRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
         }
 
         List<AuditLogResponseDto> content = page.getContent().stream()

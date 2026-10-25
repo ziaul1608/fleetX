@@ -304,23 +304,19 @@ public class AdminUserOperationsTest {
     }
 
     @Test
-    @DisplayName("Admin can execute password reset workflow for user")
+    @DisplayName("Password reset workflow is rejected with PASSWORD_AUTH_RETIRED")
     @WithMockUser(username = "admin@fleetx.test", roles = {"ADMIN"})
-    void shouldResetUserPassword() throws Exception {
+    void shouldRejectPasswordResetAsRetired() throws Exception {
         AdminPasswordResetRequest reset = new AdminPasswordResetRequest("NewPassword999!");
 
         mockMvc.perform(put("/api/v1/admin/users/" + driverUser.getId() + "/password-reset")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(reset)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-
-        User updated = userRepository.findById(driverUser.getId()).orElseThrow();
-        assertThat(passwordEncoder.matches("NewPassword999!", updated.getPasswordHash())).isTrue();
-
-        assertThat(auditLogRepository.findAll())
-                .anyMatch(l -> "USER_PASSWORD_RESET".equals(l.getAction()));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode").value("PASSWORD_AUTH_RETIRED"))
+                .andExpect(jsonPath("$.message").value("Password management has been retired. Users authenticate securely via Email OTP dispatched to their email."));
     }
 
     @Test

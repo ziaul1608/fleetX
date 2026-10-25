@@ -1,12 +1,12 @@
 package com.fleetx.auth.controller;
 
-import com.fleetx.auth.dto.LoginRequest;
-import com.fleetx.auth.dto.PasswordChangeRequest;
-import com.fleetx.auth.dto.UserResponseDto;
+import com.fleetx.auth.dto.*;
 import com.fleetx.auth.service.AuthService;
 import com.fleetx.shared.dto.ApiResponse;
+import com.fleetx.shared.exception.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -25,12 +25,47 @@ public class AuthController {
         this.authService = authService;
     }
 
+    @PostMapping("/otp/send-signup")
+    public ResponseEntity<ApiResponse<OtpSentResponse>> sendSignupOtp(
+            @Valid @RequestBody SendSignupOtpRequest request,
+            HttpServletRequest httpRequest) {
+        OtpSentResponse response = authService.sendSignupOtp(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Verification code sent successfully.", response));
+    }
+
+    @PostMapping("/otp/verify-signup")
+    public ResponseEntity<ApiResponse<UserResponseDto>> verifySignupOtp(
+            @Valid @RequestBody VerifySignupOtpRequest request,
+            HttpServletRequest httpRequest) {
+        UserResponseDto userDto = authService.verifySignupOtp(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Registration completed successfully. Welcome to FleetX!", userDto));
+    }
+
+    @PostMapping("/otp/send-login")
+    public ResponseEntity<ApiResponse<OtpSentResponse>> sendLoginOtp(
+            @Valid @RequestBody SendLoginOtpRequest request,
+            HttpServletRequest httpRequest) {
+        OtpSentResponse response = authService.sendLoginOtp(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Verification code sent successfully.", response));
+    }
+
+    @PostMapping("/otp/verify-login")
+    public ResponseEntity<ApiResponse<UserResponseDto>> verifyLoginOtp(
+            @Valid @RequestBody VerifyLoginOtpRequest request,
+            HttpServletRequest httpRequest) {
+        UserResponseDto userDto = authService.verifyLoginOtp(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Login successful. Welcome back!", userDto));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserResponseDto>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
-        UserResponseDto userDto = authService.login(request, httpRequest);
-        return ResponseEntity.ok(ApiResponse.ok("Authentication successful.", userDto));
+        throw new DomainException(
+                "Password-only authentication has been retired. Please log in using your registered email and a 6-digit verification code.",
+                HttpStatus.BAD_REQUEST,
+                "PASSWORD_AUTH_RETIRED"
+        );
     }
 
     @GetMapping("/me")
@@ -49,11 +84,14 @@ public class AuthController {
 
     @PutMapping("/password")
     public ResponseEntity<ApiResponse<Void>> changePassword(
-            @Valid @RequestBody PasswordChangeRequest request,
+            @Valid @RequestBody(required = false) PasswordChangeRequest request,
             Authentication authentication,
             HttpServletRequest httpRequest) {
-        authService.changePassword(request, authentication, httpRequest);
-        return ResponseEntity.ok(ApiResponse.ok("Password updated successfully.", null));
+        throw new DomainException(
+                "Password management has been retired. FleetX uses passwordless Email OTP authentication.",
+                HttpStatus.BAD_REQUEST,
+                "PASSWORD_AUTH_RETIRED"
+        );
     }
 
     @GetMapping("/csrf")

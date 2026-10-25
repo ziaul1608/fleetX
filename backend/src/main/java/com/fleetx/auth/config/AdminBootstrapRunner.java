@@ -68,36 +68,7 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         java.util.Optional<User> existingUserOpt = userRepository.findByEmail(normalizedEmail);
 
         if (passwordOverride) {
-            // When passwordOverride is true, NEVER create a new administrator account.
-            // Only update an existing account.
-            User targetAdmin;
-            if (existingUserOpt.isPresent()) {
-                targetAdmin = existingUserOpt.get();
-            } else {
-                // If specified email doesn't match, check if there is an existing administrator
-                org.springframework.data.domain.Page<User> adminPage = userRepository.findByRoles_Name("ROLE_ADMIN", org.springframework.data.domain.Pageable.ofSize(10));
-                if (adminPage.getTotalElements() == 1) {
-                    targetAdmin = adminPage.getContent().get(0);
-                    log.warn("[AdminBootstrap] Specified email '{}' was not found, but sole administrator '{}' was identified. Targeting existing administrator for password override.",
-                            normalizedEmail, targetAdmin.getEmail());
-                } else {
-                    log.error("[AdminBootstrap] Refusing password override: Account '{}' does not exist and {} administrator accounts exist. No accounts were modified.",
-                            normalizedEmail, adminPage.getTotalElements());
-                    return;
-                }
-            }
-
-            targetAdmin.setPasswordHash(passwordEncoder.encode(adminPassword.trim()));
-            userRepository.save(targetAdmin);
-            auditService.recordEvent(
-                    targetAdmin.getId(),
-                    "ADMIN_PASSWORD_OVERRIDDEN",
-                    "USER",
-                    targetAdmin.getId(),
-                    "127.0.0.1",
-                    "{\"email\":\"" + targetAdmin.getEmail() + "\",\"override\":true}"
-            );
-            log.warn("[AdminBootstrap] Securely overridden administrator password for '{}' via BOOTSTRAP_ADMIN_PASSWORD_OVERRIDE.", targetAdmin.getEmail());
+            log.warn("[AdminBootstrap] BOOTSTRAP_ADMIN_PASSWORD_OVERRIDE is retired and disabled. FleetX uses passwordless Email OTP authentication.");
             return;
         }
 
@@ -115,23 +86,27 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         Role adminRole = roleRepository.findByName("ROLE_ADMIN")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN", "System Administrator with full access")));
 
-        User adminUser = new User(
-                normalizedEmail,
-                passwordEncoder.encode(adminPassword.trim()),
-                adminFullName.trim()
-        );
-        adminUser.setActive(true);
-        adminUser.setRoles(Set.of(adminRole));
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(1L, () -> {
+            User adminUser = new User(
+                    1L,
+                    normalizedEmail,
+                    passwordEncoder.encode(adminPassword.trim()),
+                    adminFullName.trim()
+            );
+            adminUser.setActive(true);
+            adminUser.setRoles(Set.of(adminRole));
 
-        User saved = userRepository.save(adminUser);
-        auditService.recordEvent(
-                saved.getId(),
-                "ADMIN_BOOTSTRAP_INITIALIZED",
-                "USER",
-                saved.getId(),
-                "127.0.0.1",
-                "{\"bootstrap\":true,\"email\":\"" + normalizedEmail + "\"}"
-        );
+            User saved = userRepository.save(adminUser);
+            auditService.recordEvent(
+                    1L,
+                    saved.getId(),
+                    "ADMIN_BOOTSTRAP_INITIALIZED",
+                    "USER",
+                    saved.getId(),
+                    "127.0.0.1",
+                    "{\"bootstrap\":true,\"email\":\"" + normalizedEmail + "\"}"
+            );
+        });
 
         log.info("[AdminBootstrap] Successfully bootstrapped initial administrator: {} (Role: ROLE_ADMIN)", normalizedEmail);
     }

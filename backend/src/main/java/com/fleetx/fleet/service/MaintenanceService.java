@@ -7,6 +7,7 @@ import com.fleetx.fleet.entity.*;
 import com.fleetx.fleet.repository.MaintenanceRecordRepository;
 import com.fleetx.fleet.repository.ServiceWarningRepository;
 import com.fleetx.fleet.repository.VehicleRepository;
+import com.fleetx.shared.context.TenantSecurityContext;
 import com.fleetx.shared.contract.AlertPublisher;
 import com.fleetx.shared.exception.DomainException;
 import com.fleetx.shared.exception.ResourceNotFoundException;
@@ -48,7 +49,8 @@ public class MaintenanceService {
 
     @Transactional
     public MaintenanceRecordResponseDto recordMaintenance(Long vehicleId, MaintenanceRecordCreateRequest request) {
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Vehicle vehicle = vehicleRepository.findByIdAndTenantId(vehicleId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", vehicleId));
 
         // Validate service type
@@ -75,6 +77,7 @@ public class MaintenanceService {
                 request.getNextServiceDueDate(),
                 request.getStatus()
         );
+        record.setTenantId(tenantId);
 
         // Update vehicle odometer if service odometer is higher
         if (request.getOdometerAtService() > vehicle.getOdometerKm()) {
@@ -101,22 +104,24 @@ public class MaintenanceService {
 
     @Transactional(readOnly = true)
     public Page<MaintenanceRecordResponseDto> getRecordsByVehicle(Long vehicleId, Pageable pageable) {
-        if (!vehicleRepository.existsById(vehicleId)) {
-            throw new ResourceNotFoundException("Vehicle", vehicleId);
-        }
-        return maintenanceRepository.findByVehicleIdOrderByServiceDateDesc(vehicleId, pageable)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Vehicle vehicle = vehicleRepository.findByIdAndTenantId(vehicleId, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", vehicleId));
+        return maintenanceRepository.findByVehicleIdOrderByServiceDateDesc(vehicle.getId(), pageable)
                 .map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
     public Page<MaintenanceRecordResponseDto> getAllRecords(Pageable pageable) {
-        return maintenanceRepository.findAllByOrderByServiceDateDesc(pageable)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        return maintenanceRepository.findByTenantIdOrderByServiceDateDesc(tenantId, pageable)
                 .map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
     public List<ServiceWarningResponseDto> getActiveWarnings() {
-        return warningRepository.findByResolvedFalseOrderByCreatedAtDesc().stream()
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        return warningRepository.findByTenantIdAndResolvedFalseOrderByCreatedAtDesc(tenantId).stream()
                 .map(this::mapWarningToDto)
                 .collect(Collectors.toList());
     }
@@ -187,6 +192,7 @@ public class MaintenanceService {
 
         if (!alreadyWarned) {
             ServiceWarning warning = new ServiceWarning(vehicle, warningType, severity, message);
+            warning.setTenantId(vehicle.getTenantId());
             warningRepository.save(warning);
             log.info("[Fleet Alert] Registered {} for vehicle #{} ({}): {}", severity, vehicle.getId(), vehicle.getLicensePlate(), message);
 

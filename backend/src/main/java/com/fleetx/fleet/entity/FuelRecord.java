@@ -14,6 +14,9 @@ public class FuelRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
@@ -55,6 +58,19 @@ public class FuelRecord {
         this.fuelDate = fuelDate != null ? fuelDate : Instant.now();
     }
 
+    @PrePersist
+    public void onPrePersist() {
+        if (fuelDate == null) {
+            fuelDate = Instant.now();
+        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "FuelRecord");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "FuelRecord");
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -81,4 +97,7 @@ public class FuelRecord {
 
     public Double getEfficiencyKmPerLiter() { return efficiencyKmPerLiter; }
     public void setEfficiencyKmPerLiter(Double efficiencyKmPerLiter) { this.efficiencyKmPerLiter = efficiencyKmPerLiter; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

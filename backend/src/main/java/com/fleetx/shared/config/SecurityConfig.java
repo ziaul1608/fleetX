@@ -57,12 +57,15 @@ public class SecurityConfig {
                                 "/api/health",
                                 "/api/v1/auth/login",
                                 "/api/auth/login",
+                                "/api/v1/auth/otp/**",
+                                "/api/auth/otp/**",
                                 "/api/v1/auth/csrf",
                                 "/api/auth/csrf",
                                 "/ws/fleetx/**"
                         )
                 )
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
+                .addFilterAfter(new TenantContextFilter(), CsrfCookieFilter.class)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
@@ -70,6 +73,7 @@ public class SecurityConfig {
                         // Public Health Check & Auth Bootstrap
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/otp/**", "/api/auth/otp/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf", "/api/auth/csrf").permitAll()
                         .requestMatchers("/ws/fleetx/**").permitAll()
                         .requestMatchers("/error").permitAll()
@@ -88,6 +92,9 @@ public class SecurityConfig {
                                 "/assets/**",
                                 "/*.png", "/*.jpg", "/*.svg", "/*.ico", "/*.css", "/*.js",
                                 "/login",
+                                "/signup",
+                                "/dashboard",
+                                "/dashboard/**",
                                 "/profile",
                                 "/shipments",
                                 "/shipments/**",
@@ -175,6 +182,24 @@ final class CsrfCookieFilter extends OncePerRequestFilter {
             csrfToken.getToken();
         }
         filterChain.doFilter(request, response);
+    }
+}
+
+final class TenantContextFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        Long previousOverride = com.fleetx.shared.context.TenantSecurityContext.getExplicitTenantOverride();
+        try {
+            org.springframework.security.core.Authentication auth =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof com.fleetx.auth.security.FleetxUserPrincipal principal) {
+                com.fleetx.shared.context.TenantSecurityContext.setTenantId(principal.getTenantId());
+            }
+            filterChain.doFilter(request, response);
+        } finally {
+            com.fleetx.shared.context.TenantSecurityContext.setTenantId(previousOverride);
+        }
     }
 }
 

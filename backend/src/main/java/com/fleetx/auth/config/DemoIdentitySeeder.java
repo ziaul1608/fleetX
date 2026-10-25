@@ -52,18 +52,20 @@ public class DemoIdentitySeeder implements ApplicationRunner {
     }
 
     public void seedDemoUsers() {
-        ensureRole("ROLE_ADMIN", "System Administrator with full access");
-        Role fleetManagerRole = ensureRole("ROLE_FLEET_MANAGER", "Fleet & Asset Manager");
-        Role dispatcherRole = ensureRole("ROLE_DISPATCHER", "Logistics Dispatcher");
-        Role driverRole = ensureRole("ROLE_DRIVER", "Commercial Fleet Driver");
-        Role viewerRole = ensureRole("ROLE_VIEWER", "Auditor & Executive Read-Only Viewer");
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(1L, () -> {
+            ensureRole("ROLE_ADMIN", "System Administrator with full access");
+            Role fleetManagerRole = ensureRole("ROLE_FLEET_MANAGER", "Fleet & Asset Manager");
+            Role dispatcherRole = ensureRole("ROLE_DISPATCHER", "Logistics Dispatcher");
+            Role driverRole = ensureRole("ROLE_DRIVER", "Commercial Fleet Driver");
+            Role viewerRole = ensureRole("ROLE_VIEWER", "Auditor & Executive Read-Only Viewer");
 
-        ensureDemoUser("manager@fleetx.local", "DevManager123!", "Priya Nair (Fleet Manager)", fleetManagerRole);
-        ensureDemoUser("dispatcher@fleetx.local", "DevDispatch123!", "Arjun Mehta (Lead Dispatcher)", dispatcherRole);
-        ensureDemoUser("driver.rajesh@fleetx.local", "DevDriver123!", "Rajesh Sharma (Senior Driver)", driverRole);
-        ensureDemoUser("viewer@fleetx.local", "DevViewer123!", "Dr. S. Kulkarni (PBL Evaluator)", viewerRole);
+            ensureDemoUser("manager@fleetx.local", "DevManager123!", "Priya Nair (Fleet Manager)", fleetManagerRole);
+            ensureDemoUser("dispatcher@fleetx.local", "DevDispatch123!", "Arjun Mehta (Lead Dispatcher)", dispatcherRole);
+            ensureDemoUser("driver.rajesh@fleetx.local", "DevDriver123!", "Rajesh Sharma (Senior Driver)", driverRole);
+            ensureDemoUser("viewer@fleetx.local", "DevViewer123!", "Dr. S. Kulkarni (PBL Evaluator)", viewerRole);
 
-        log.info("[DemoIdentitySeeder] Repeatable development role and user accounts verified.");
+            log.info("[DemoIdentitySeeder] Repeatable development role and user accounts verified.");
+        });
     }
 
     private Role ensureRole(String name, String description) {
@@ -75,11 +77,12 @@ public class DemoIdentitySeeder implements ApplicationRunner {
         if (userRepository.existsByEmail(email)) {
             return;
         }
-        User user = new User(email, passwordEncoder.encode(rawPassword), fullName);
+        User user = new User(1L, email, passwordEncoder.encode(rawPassword), fullName);
         user.setActive(true);
         user.setRoles(Set.of(role));
         User saved = userRepository.save(user);
         auditService.recordEvent(
+                1L,
                 saved.getId(),
                 "DEMO_USER_SEEDED",
                 "USER",

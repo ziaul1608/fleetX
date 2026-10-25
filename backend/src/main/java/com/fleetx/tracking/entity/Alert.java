@@ -14,6 +14,9 @@ public class Alert {
     @Column(name = "alert_type", nullable = false, length = 50)
     private String alertType;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @Column(nullable = false, length = 20)
     private String severity = "WARNING";
 
@@ -45,6 +48,19 @@ public class Alert {
     private Instant createdAt = Instant.now();
 
     public Alert() {}
+
+    @PrePersist
+    public void onPrePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "Alert");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "Alert");
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -81,4 +97,7 @@ public class Alert {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

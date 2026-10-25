@@ -10,6 +10,7 @@ import com.fleetx.drivers.entity.TripStatusHistory;
 import com.fleetx.drivers.repository.DriverRepository;
 import com.fleetx.drivers.repository.TripRepository;
 import com.fleetx.drivers.repository.TripStatusHistoryRepository;
+import com.fleetx.shared.context.TenantSecurityContext;
 import com.fleetx.shared.contract.AlertPublisher;
 import com.fleetx.shared.contract.TripLookupService;
 import com.fleetx.shared.contract.VehicleLookupService;
@@ -62,7 +63,8 @@ public class TripService implements TripLookupService {
 
     @Transactional(readOnly = true)
     public PageResponse<TripResponseDto> searchTrips(String search, String status, Long driverId, Long vehicleId, Pageable pageable) {
-        Page<Trip> page = tripRepository.findWithFilters(search, status, driverId, vehicleId, pageable);
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Page<Trip> page = tripRepository.findWithFilters(tenantId, search, status, driverId, vehicleId, pageable);
         List<TripResponseDto> content = page.getContent().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -79,14 +81,16 @@ public class TripService implements TripLookupService {
 
     @Transactional(readOnly = true)
     public TripResponseDto getTripById(Long id) {
-        Trip trip = tripRepository.findById(id)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Trip trip = tripRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip", id));
         return mapToDto(trip);
     }
 
     @Transactional(readOnly = true)
     public List<TripStatusHistoryResponseDto> getTripHistory(Long tripId) {
-        if (!tripRepository.existsById(tripId)) {
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        if (!tripRepository.existsByIdAndTenantId(tripId, tenantId)) {
             throw new ResourceNotFoundException("Trip", tripId);
         }
         return historyRepository.findByTripIdOrderByCreatedAtDesc(tripId).stream()
@@ -104,6 +108,8 @@ public class TripService implements TripLookupService {
 
     @Transactional
     public TripResponseDto createTrip(TripCreateRequest request) {
+        Long tenantId = TenantSecurityContext.requireTenantId();
+
         // Validate vehicle availability via shared VehicleLookupService
         boolean vehicleAvailable = vehicleLookupService.isVehicleAvailableForTrip(request.vehicleId());
         if (!vehicleAvailable) {
@@ -124,6 +130,7 @@ public class TripService implements TripLookupService {
         }
 
         Trip trip = new Trip();
+        trip.setTenantId(tenantId);
         trip.setTripCode(generateUniqueTripCode());
         trip.setVehicleId(request.vehicleId());
         trip.setDriverId(request.driverId());
@@ -144,13 +151,15 @@ public class TripService implements TripLookupService {
         vehicleLookupService.updateVehicleOperationalStatus(request.vehicleId(), "IN_TRIP");
 
         // Record status history
-        historyRepository.save(new TripStatusHistory(
+        TripStatusHistory history = new TripStatusHistory(
                 saved.getId(),
                 null,
                 saved.getStatus(),
                 "Trip created and assets allocated.",
                 null
-        ));
+        );
+        history.setTenantId(tenantId);
+        historyRepository.save(history);
 
         // Publish alert
         alertPublisher.publishAlert(
@@ -167,7 +176,8 @@ public class TripService implements TripLookupService {
 
     @Transactional
     public TripResponseDto updateTripStatus(Long tripId, String targetStatusStr, String remarks, Long updatedBy) {
-        Trip trip = tripRepository.findById(tripId)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Trip trip = tripRepository.findByIdAndTenantId(tripId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip", tripId));
 
         TripStatus currentStatus = TripStatus.fromString(trip.getStatus());
@@ -259,13 +269,15 @@ public class TripService implements TripLookupService {
         Trip updated = tripRepository.save(trip);
 
         // Record history
-        historyRepository.save(new TripStatusHistory(
+        TripStatusHistory history = new TripStatusHistory(
                 updated.getId(),
                 currentStatus.name(),
                 targetStatus.name(),
                 remarks != null ? remarks : "Status changed to " + targetStatus,
                 updatedBy
-        ));
+        );
+        history.setTenantId(tenantId);
+        historyRepository.save(history);
 
         return mapToDto(updated);
     }
@@ -275,7 +287,9 @@ public class TripService implements TripLookupService {
     @Override
     @Transactional(readOnly = true)
     public Optional<TripSummaryDto> findTripSummaryById(Long tripId) {
+        Optional<Long> optionalTenantId = TenantSecurityContext.getOptionalTenantId();
         return tripRepository.findById(tripId)
+                .filter(t -> optionalTenantId.isEmpty() || t.getTenantId().equals(optionalTenantId.get()))
                 .map(t -> new TripSummaryDto(
                         t.getId(),
                         t.getTripCode(),
@@ -290,7 +304,9 @@ public class TripService implements TripLookupService {
     @Override
     @Transactional(readOnly = true)
     public boolean isTripActive(Long tripId) {
+        Optional<Long> optionalTenantId = TenantSecurityContext.getOptionalTenantId();
         return tripRepository.findById(tripId)
+                .filter(t -> optionalTenantId.isEmpty() || t.getTenantId().equals(optionalTenantId.get()))
                 .map(t -> TripStatus.IN_PROGRESS.name().equalsIgnoreCase(t.getStatus())
                         || "IN_TRANSIT".equalsIgnoreCase(t.getStatus()))
                 .orElse(false);

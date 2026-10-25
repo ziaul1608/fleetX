@@ -52,6 +52,9 @@ public class Vehicle {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -89,11 +92,13 @@ public class Vehicle {
         if (odometerKm == null) {
             odometerKm = 0.0;
         }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "Vehicle");
     }
 
     @PreUpdate
     public void onPreUpdate() {
         updatedAt = Instant.now();
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "Vehicle");
     }
 
     public Long getId() { return id; }
@@ -148,4 +153,7 @@ public class Vehicle {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

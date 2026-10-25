@@ -15,6 +15,9 @@ public class ShipmentWaypoint {
     @Column(name = "shipment_id", nullable = false)
     private Long shipmentId;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @Column(name = "waypoint_name", nullable = false, length = 120)
     private String waypointName;
 
@@ -46,6 +49,16 @@ public class ShipmentWaypoint {
         this.estimatedArrival = estimatedArrival;
     }
 
+    @PrePersist
+    public void onPrePersist() {
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "ShipmentWaypoint");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "ShipmentWaypoint");
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -69,4 +82,7 @@ public class ShipmentWaypoint {
 
     public Instant getEstimatedArrival() { return estimatedArrival; }
     public void setEstimatedArrival(Instant estimatedArrival) { this.estimatedArrival = estimatedArrival; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

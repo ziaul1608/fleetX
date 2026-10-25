@@ -64,6 +64,9 @@ public class Shipment {
     @Column(name = "delivery_notes", columnDefinition = "TEXT")
     private String deliveryNotes;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -87,11 +90,13 @@ public class Shipment {
         if (receiverAddress == null) {
             receiverAddress = "Destination Delivery Hub";
         }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "Shipment");
     }
 
     @PreUpdate
     public void onPreUpdate() {
         updatedAt = Instant.now();
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "Shipment");
     }
 
     public Long getId() { return id; }
@@ -150,4 +155,7 @@ public class Shipment {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

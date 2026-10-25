@@ -48,6 +48,9 @@ public class Driver {
     @Column(name = "operational_notes", columnDefinition = "TEXT")
     private String operationalNotes;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -71,11 +74,13 @@ public class Driver {
         if (availabilityStatus == null) {
             availabilityStatus = "AVAILABLE";
         }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "Driver");
     }
 
     @PreUpdate
     public void onPreUpdate() {
         updatedAt = Instant.now();
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "Driver");
     }
 
     public Long getId() { return id; }
@@ -122,4 +127,7 @@ public class Driver {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

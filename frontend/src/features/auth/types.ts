@@ -7,6 +7,41 @@ export interface UserDto {
   roles: RoleType[];
   active: boolean;
   createdAt?: string;
+  tenantId?: number;
+  companyName?: string;
+  warehouseName?: string;
+}
+
+export interface SendSignupOtpRequest {
+  email: string;
+  companyName: string;
+  warehouseName: string;
+  fullName: string;
+}
+
+export interface VerifySignupOtpRequest {
+  email: string;
+  otp: string;
+  companyName: string;
+  warehouseName: string;
+  fullName: string;
+}
+
+export interface SendLoginOtpRequest {
+  email: string;
+}
+
+export interface VerifyLoginOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface OtpSentResponse {
+  email: string;
+  purpose: 'SIGNUP' | 'LOGIN';
+  expiresInSeconds: number;
+  cooldownSeconds: number;
+  message: string;
 }
 
 export interface UserCreateRequest {

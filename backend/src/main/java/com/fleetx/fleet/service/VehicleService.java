@@ -7,6 +7,7 @@ import com.fleetx.fleet.entity.VehicleStatus;
 import com.fleetx.fleet.entity.VehicleType;
 import com.fleetx.fleet.repository.ServiceWarningRepository;
 import com.fleetx.fleet.repository.VehicleRepository;
+import com.fleetx.shared.context.TenantSecurityContext;
 import com.fleetx.shared.contract.TripLookupService;
 import com.fleetx.shared.contract.VehicleLookupService;
 import com.fleetx.shared.dto.VehicleSummaryDto;
@@ -49,11 +50,12 @@ public class VehicleService implements VehicleLookupService {
     public VehicleResponseDto createVehicle(VehicleCreateRequest request) {
         String normalizedVin = request.getVin().trim().toUpperCase();
         String normalizedPlate = request.getLicensePlate().trim().toUpperCase();
+        Long tenantId = TenantSecurityContext.requireTenantId();
 
-        if (vehicleRepository.existsByVin(normalizedVin)) {
+        if (vehicleRepository.existsByVinAndTenantId(normalizedVin, tenantId)) {
             throw new ResourceConflictException("A vehicle with VIN '" + normalizedVin + "' already exists.");
         }
-        if (vehicleRepository.existsByLicensePlate(normalizedPlate)) {
+        if (vehicleRepository.existsByLicensePlateAndTenantId(normalizedPlate, tenantId)) {
             throw new ResourceConflictException("A vehicle with registration plate '" + normalizedPlate + "' already exists.");
         }
 
@@ -77,6 +79,7 @@ public class VehicleService implements VehicleLookupService {
                 request.getOdometerKm(),
                 status.name()
         );
+        vehicle.setTenantId(tenantId);
 
         Vehicle saved = vehicleRepository.save(vehicle);
         return mapToDto(saved);
@@ -84,31 +87,35 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional(readOnly = true)
     public Page<VehicleResponseDto> findVehicles(String status, String type, Boolean active, String search, Pageable pageable) {
+        Long tenantId = TenantSecurityContext.requireTenantId();
         String statusFilter = (status != null && !status.isBlank()) ? status.trim() : null;
         String typeFilter = (type != null && !type.isBlank()) ? type.trim() : null;
         String searchFilter = (search != null && !search.isBlank()) ? search.trim() : null;
 
-        return vehicleRepository.findWithFilters(statusFilter, typeFilter, active, searchFilter, pageable)
+        return vehicleRepository.findWithFilters(tenantId, statusFilter, typeFilter, active, searchFilter, pageable)
                 .map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
     public List<VehicleResponseDto> findAllVehiclesList() {
-        return vehicleRepository.findAll().stream()
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        return vehicleRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public VehicleResponseDto getVehicleById(Long id) {
-        Vehicle vehicle = vehicleRepository.findById(id)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Vehicle vehicle = vehicleRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
         return mapToDto(vehicle);
     }
 
     @Transactional
     public VehicleResponseDto updateVehicle(Long id, VehicleUpdateRequest request) {
-        Vehicle vehicle = vehicleRepository.findById(id)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Vehicle vehicle = vehicleRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
         // Validate enums
@@ -142,7 +149,8 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional
     public VehicleResponseDto updateVehicleStatus(Long id, VehicleStatusUpdateRequest request) {
-        Vehicle vehicle = vehicleRepository.findById(id)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Vehicle vehicle = vehicleRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
         VehicleStatus targetStatus = VehicleStatus.fromString(request.getStatus());
@@ -165,7 +173,8 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional
     public VehicleResponseDto updateOdometer(Long id, Double newOdometerKm) {
-        Vehicle vehicle = vehicleRepository.findById(id)
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Vehicle vehicle = vehicleRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
         if (newOdometerKm < vehicle.getOdometerKm()) {
@@ -189,7 +198,9 @@ public class VehicleService implements VehicleLookupService {
     @Override
     @Transactional(readOnly = true)
     public Optional<VehicleSummaryDto> findVehicleSummaryById(Long vehicleId) {
+        Optional<Long> optionalTenantId = TenantSecurityContext.getOptionalTenantId();
         return vehicleRepository.findById(vehicleId)
+                .filter(v -> optionalTenantId.isEmpty() || v.getTenantId().equals(optionalTenantId.get()))
                 .map(v -> new VehicleSummaryDto(
                         v.getId(),
                         v.getVin(),
@@ -210,6 +221,11 @@ public class VehicleService implements VehicleLookupService {
         }
 
         Vehicle vehicle = vehicleOpt.get();
+        Optional<Long> optionalTenantId = TenantSecurityContext.getOptionalTenantId();
+        if (optionalTenantId.isPresent() && !vehicle.getTenantId().equals(optionalTenantId.get())) {
+            return false;
+        }
+
         if (!Boolean.TRUE.equals(vehicle.getActive())) {
             return false;
         }
@@ -231,9 +247,12 @@ public class VehicleService implements VehicleLookupService {
     @Transactional
     public void updateVehicleOperationalStatus(Long vehicleId, String status) {
         VehicleStatus validated = VehicleStatus.fromString(status);
+        Optional<Long> optionalTenantId = TenantSecurityContext.getOptionalTenantId();
         vehicleRepository.findById(vehicleId).ifPresent(v -> {
-            v.setStatus(validated.name());
-            vehicleRepository.save(v);
+            if (optionalTenantId.isEmpty() || v.getTenantId().equals(optionalTenantId.get())) {
+                v.setStatus(validated.name());
+                vehicleRepository.save(v);
+            }
         });
     }
 

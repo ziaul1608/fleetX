@@ -53,8 +53,8 @@ class SimulationAndGeofenceTest {
         String plate = "MH-01-" + suffix;
         jdbcTemplate.update("""
                 INSERT INTO vehicles (vin, license_plate, make, model, model_year, vehicle_type, fuel_type,
-                                      capacity_kg, capacity_volume_m3, odometer_km, status, active, created_at)
-                VALUES (?, ?, 'Tata', 'Prima 5530', 2025, 'TRUCK', 'DIESEL', 28000.0, 55.0, 15000.0, 'AVAILABLE', TRUE, CURRENT_TIMESTAMP)
+                                      capacity_kg, capacity_volume_m3, odometer_km, status, active, tenant_id, created_at)
+                VALUES (?, ?, 'Tata', 'Prima 5530', 2025, 'TRUCK', 'DIESEL', 28000.0, 55.0, 15000.0, 'AVAILABLE', TRUE, 1, CURRENT_TIMESTAMP)
                 """, vin, plate);
         return jdbcTemplate.queryForObject(
                 "SELECT id FROM vehicles WHERE license_plate = ?",

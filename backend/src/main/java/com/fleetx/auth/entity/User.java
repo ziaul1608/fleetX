@@ -13,10 +13,13 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @Column(nullable = false, unique = true, length = 180)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(name = "full_name", nullable = false, length = 120)
@@ -47,13 +50,33 @@ public class User {
         this.fullName = fullName;
     }
 
+    public User(Long tenantId, String email, String passwordHash, String fullName) {
+        this.tenantId = tenantId;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.fullName = fullName;
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = Instant.now();
+        }
+        this.updatedAt = Instant.now();
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "User");
+    }
+
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = Instant.now();
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "User");
     }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

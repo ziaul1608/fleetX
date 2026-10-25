@@ -1,5 +1,6 @@
 package com.fleetx.shipments.service;
 
+import com.fleetx.shared.context.TenantSecurityContext;
 import com.fleetx.shared.contract.AlertPublisher;
 import com.fleetx.shared.contract.ShipmentLookupService;
 import com.fleetx.shared.contract.TripLookupService;
@@ -62,7 +63,8 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional(readOnly = true)
     public PageResponse<ShipmentResponseDto> searchShipments(String search, String status, Long tripId, Pageable pageable) {
-        Page<Shipment> page = shipmentRepository.findWithFilters(search, status, tripId, pageable);
+        Long tenantId = TenantSecurityContext.requireTenantId();
+        Page<Shipment> page = shipmentRepository.findWithFilters(tenantId, search, status, tripId, pageable);
         List<ShipmentResponseDto> content = page.getContent().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -85,10 +87,11 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional
     public ShipmentResponseDto createShipment(ShipmentCreateRequest request) {
+        Long tenantId = TenantSecurityContext.requireTenantId();
         String trackingNum;
         if (request.trackingNumber() != null && !request.trackingNumber().isBlank()) {
             trackingNum = request.trackingNumber().trim().toUpperCase();
-            if (shipmentRepository.existsByTrackingNumber(trackingNum)) {
+            if (shipmentRepository.existsByTenantIdAndTrackingNumber(tenantId, trackingNum)) {
                 throw new DomainException("A shipment with tracking number '" + trackingNum + "' already exists.",
                         HttpStatus.CONFLICT, "RESOURCE_CONFLICT");
             }
@@ -102,6 +105,7 @@ public class ShipmentService implements ShipmentLookupService {
         }
 
         Shipment shipment = new Shipment();
+        shipment.setTenantId(tenantId);
         shipment.setTrackingNumber(trackingNum);
         shipment.setSenderName(request.senderName().trim());
         shipment.setSenderAddress(request.senderAddress().trim());
@@ -117,22 +121,23 @@ public class ShipmentService implements ShipmentLookupService {
         Shipment saved = shipmentRepository.save(shipment);
 
         // Record creation timeline milestone
-        timelineRepository.save(new ShipmentTimelineEvent(
+        ShipmentTimelineEvent event = new ShipmentTimelineEvent(
                 saved.getId(),
                 saved.getStatus(),
                 saved.getSenderAddress(),
                 linkedTrip != null
                         ? "Shipment created and assigned to Trip " + linkedTrip.tripCode()
                         : "Shipment manifest registered and awaiting dispatch."
-        ));
+        );
+        event.setTenantId(tenantId);
+        timelineRepository.save(event);
 
         return mapToDto(saved);
     }
 
     @Transactional
     public ShipmentResponseDto updateShipment(Long id, ShipmentUpdateRequest request) {
-        Shipment shipment = shipmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Shipment", id));
+        Shipment shipment = resolveShipment(String.valueOf(id));
 
         shipment.setSenderName(request.senderName().trim());
         shipment.setSenderAddress(request.senderAddress().trim());
@@ -151,8 +156,7 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional
     public ShipmentResponseDto assignShipmentToTrip(Long shipmentId, Long tripId) {
-        Shipment shipment = shipmentRepository.findById(shipmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Shipment", shipmentId));
+        Shipment shipment = resolveShipment(String.valueOf(shipmentId));
 
         ShipmentStatus currentStatus = ShipmentStatus.fromString(shipment.getStatus());
         if (currentStatus.isTerminal()) {
@@ -169,12 +173,14 @@ public class ShipmentService implements ShipmentLookupService {
 
         Shipment saved = shipmentRepository.save(shipment);
 
-        timelineRepository.save(new ShipmentTimelineEvent(
+        ShipmentTimelineEvent event = new ShipmentTimelineEvent(
                 saved.getId(),
                 "ASSIGNED",
                 saved.getSenderAddress(),
                 "Associated with Trip " + trip.tripCode() + " (" + trip.originAddress() + " → " + trip.destinationAddress() + ")"
-        ));
+        );
+        event.setTenantId(saved.getTenantId());
+        timelineRepository.save(event);
 
         alertPublisher.publishAlert(
                 "SHIPMENT_ASSIGNED",
@@ -190,8 +196,7 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional
     public ShipmentResponseDto updateShipmentStatus(Long id, String targetStatusStr, String locationSummary, String remarks) {
-        Shipment shipment = shipmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Shipment", id));
+        Shipment shipment = resolveShipment(String.valueOf(id));
 
         ShipmentStatus currentStatus = ShipmentStatus.fromString(shipment.getStatus());
         ShipmentStatus targetStatus;
@@ -249,20 +254,21 @@ public class ShipmentService implements ShipmentLookupService {
                 ? locationSummary.trim()
                 : (targetStatus == ShipmentStatus.DELIVERED ? saved.getReceiverAddress() : saved.getSenderAddress());
 
-        timelineRepository.save(new ShipmentTimelineEvent(
+        ShipmentTimelineEvent event = new ShipmentTimelineEvent(
                 saved.getId(),
                 targetStatus.name(),
                 loc,
                 remarks != null && !remarks.isBlank() ? remarks.trim() : "Shipment transitioned to " + targetStatus.name()
-        ));
+        );
+        event.setTenantId(saved.getTenantId());
+        timelineRepository.save(event);
 
         return mapToDto(saved);
     }
 
     @Transactional
     public ShipmentResponseDto completeDelivery(Long id, String deliveryNotes, String locationSummary) {
-        Shipment shipment = shipmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Shipment", id));
+        Shipment shipment = resolveShipment(String.valueOf(id));
 
         String loc = (locationSummary != null && !locationSummary.isBlank())
                 ? locationSummary.trim()
@@ -271,13 +277,12 @@ public class ShipmentService implements ShipmentLookupService {
                 ? deliveryNotes.trim()
                 : "Consignment received and signed off at destination.";
 
-        return updateShipmentStatus(id, ShipmentStatus.DELIVERED.name(), loc, notes);
+        return updateShipmentStatus(shipment.getId(), ShipmentStatus.DELIVERED.name(), loc, notes);
     }
 
     @Transactional
     public RoutePlanResponseDto saveWaypointsAndCalculateRoute(Long shipmentId, List<WaypointItemRequest> waypointsReq) {
-        Shipment shipment = shipmentRepository.findById(shipmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Shipment", shipmentId));
+        Shipment shipment = resolveShipment(String.valueOf(shipmentId));
 
         List<WaypointItemRequest> sorted = routeCalculationService.validateAndSortWaypoints(waypointsReq);
 
@@ -324,6 +329,7 @@ public class ShipmentService implements ShipmentLookupService {
                     stopType,
                     stopEta
             );
+            wp.setTenantId(shipment.getTenantId());
             savedWaypoints.add(waypointRepository.save(wp));
         }
 
@@ -336,13 +342,15 @@ public class ShipmentService implements ShipmentLookupService {
         shipment.setEstimatedArrivalTime(finalEta);
         Shipment updatedShipment = shipmentRepository.save(shipment);
 
-        timelineRepository.save(new ShipmentTimelineEvent(
+        ShipmentTimelineEvent event = new ShipmentTimelineEvent(
                 shipmentId,
                 "ROUTE_PLANNED",
                 sorted.get(0).waypointName() + " → " + sorted.get(sorted.size() - 1).waypointName(),
                 String.format("Planned %d waypoints. Est. Straight-Line Distance: %s km, Est. Duration: %d mins.",
                         sorted.size(), totalDistanceBd, totalDurationMinutes)
-        ));
+        );
+        event.setTenantId(shipment.getTenantId());
+        timelineRepository.save(event);
 
         checkAndAlertIfDelayed(updatedShipment);
 
@@ -366,10 +374,9 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional(readOnly = true)
     public RoutePlanResponseDto getRoutePlan(Long shipmentId) {
-        Shipment shipment = shipmentRepository.findById(shipmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Shipment", shipmentId));
+        Shipment shipment = resolveShipment(String.valueOf(shipmentId));
 
-        List<WaypointResponseDto> waypoints = waypointRepository.findByShipmentIdOrderBySequenceOrderAsc(shipmentId)
+        List<WaypointResponseDto> waypoints = waypointRepository.findByShipmentIdOrderBySequenceOrderAsc(shipment.getId())
                 .stream()
                 .map(this::mapWaypointToDto)
                 .collect(Collectors.toList());
@@ -405,18 +412,21 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional
     public int detectAndFlagDelayedShipments() {
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Instant now = Instant.now();
-        List<Shipment> overdue = shipmentRepository.findOverdueShipments(now);
+        List<Shipment> overdue = shipmentRepository.findOverdueShipmentsByTenant(tenantId, now);
         for (Shipment s : overdue) {
             s.setStatus(ShipmentStatus.DELAYED.name());
             shipmentRepository.save(s);
 
-            timelineRepository.save(new ShipmentTimelineEvent(
+            ShipmentTimelineEvent event = new ShipmentTimelineEvent(
                     s.getId(),
                     "DELAYED",
                     s.getReceiverAddress(),
                     "Promised delivery window (" + s.getPromisedDeliveryTime() + ") exceeded."
-            ));
+            );
+            event.setTenantId(tenantId);
+            timelineRepository.save(event);
 
             alertPublisher.publishAlert(
                     "SHIPMENT_DELAYED",
@@ -464,12 +474,16 @@ public class ShipmentService implements ShipmentLookupService {
     public void recordTripMilestoneForShipments(Long tripId, String locationSummary, String eventType) {
         List<Shipment> shipments = shipmentRepository.findByTripId(tripId);
         for (Shipment s : shipments) {
-            timelineRepository.save(new ShipmentTimelineEvent(
-                    s.getId(),
-                    eventType,
-                    locationSummary,
-                    "Automated trip telemetry milestone for Trip #" + tripId
-            ));
+            TenantSecurityContext.runWithTenant(s.getTenantId(), () -> {
+                ShipmentTimelineEvent event = new ShipmentTimelineEvent(
+                        s.getId(),
+                        eventType,
+                        locationSummary,
+                        "Automated trip telemetry milestone for Trip #" + tripId
+                );
+                event.setTenantId(s.getTenantId());
+                timelineRepository.save(event);
+            });
         }
         log.info("Recorded milestone '{}' at location '{}' for {} shipments on trip #{}",
                 eventType, locationSummary, shipments.size(), tripId);
@@ -535,15 +549,16 @@ public class ShipmentService implements ShipmentLookupService {
         if (idOrTracking == null || idOrTracking.isBlank()) {
             throw new ResourceNotFoundException("Shipment identifier cannot be blank.");
         }
+        Long tenantId = TenantSecurityContext.requireTenantId();
         String clean = idOrTracking.trim();
         if (clean.matches("^\\d+$")) {
             Long id = Long.parseLong(clean);
-            Optional<Shipment> byId = shipmentRepository.findById(id);
+            Optional<Shipment> byId = shipmentRepository.findByIdAndTenantId(id, tenantId);
             if (byId.isPresent()) {
                 return byId.get();
             }
         }
-        return shipmentRepository.findByTrackingNumber(clean.toUpperCase())
+        return shipmentRepository.findByTrackingNumberAndTenantId(clean.toUpperCase(), tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Shipment with identifier '" + idOrTracking + "' not found."));
     }
 

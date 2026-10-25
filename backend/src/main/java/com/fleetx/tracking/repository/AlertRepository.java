@@ -14,27 +14,34 @@ import java.util.Optional;
 @Repository
 public interface AlertRepository extends JpaRepository<Alert, Long> {
 
-    Optional<Alert> findFirstByAlertTypeAndEntityTypeAndEntityIdAndAcknowledgedFalseOrderByCreatedAtDesc(
+    Optional<Alert> findByIdAndTenantId(Long id, Long tenantId);
+
+    Optional<Alert> findFirstByTenantIdAndAlertTypeAndEntityTypeAndEntityIdAndAcknowledgedFalseOrderByCreatedAtDesc(
+            Long tenantId,
             String alertType,
             String entityType,
             Long entityId
     );
 
-    Optional<Alert> findFirstByDedupKeyAndAcknowledgedFalseOrderByCreatedAtDesc(String dedupKey);
+    Optional<Alert> findFirstByTenantIdAndDedupKeyAndAcknowledgedFalseOrderByCreatedAtDesc(Long tenantId, String dedupKey);
 
-    long countByAcknowledgedFalse();
+    long countByTenantIdAndAcknowledgedFalse(Long tenantId);
 
-    long countByAcknowledgedFalseAndSeverityIgnoreCase(String severity);
+    long countByTenantIdAndAcknowledgedFalseAndSeverityIgnoreCase(Long tenantId, String severity);
+
+    long countByTenantId(Long tenantId);
 
     @Query("""
             SELECT a FROM Alert a
-            WHERE (:alertType IS NULL OR :alertType = '' OR UPPER(a.alertType) = UPPER(:alertType))
+            WHERE a.tenantId = :tenantId
+              AND (:alertType IS NULL OR :alertType = '' OR UPPER(a.alertType) = UPPER(:alertType))
               AND (:severity IS NULL OR :severity = '' OR UPPER(a.severity) = UPPER(:severity))
               AND (:entityType IS NULL OR :entityType = '' OR UPPER(a.entityType) = UPPER(:entityType))
               AND (:acknowledged IS NULL OR a.acknowledged = :acknowledged)
             ORDER BY a.createdAt DESC
             """)
     Page<Alert> findFiltered(
+            @Param("tenantId") Long tenantId,
             @Param("alertType") String alertType,
             @Param("severity") String severity,
             @Param("entityType") String entityType,
@@ -42,5 +49,5 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
             Pageable pageable
     );
 
-    List<Alert> findTop50ByOrderByCreatedAtDesc();
+    List<Alert> findTop50ByTenantIdOrderByCreatedAtDesc(Long tenantId);
 }

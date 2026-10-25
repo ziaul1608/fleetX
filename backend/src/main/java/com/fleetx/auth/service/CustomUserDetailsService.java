@@ -1,7 +1,10 @@
 package com.fleetx.auth.service;
 
+import com.fleetx.auth.entity.Tenant;
 import com.fleetx.auth.entity.User;
+import com.fleetx.auth.repository.TenantRepository;
 import com.fleetx.auth.repository.UserRepository;
+import com.fleetx.auth.security.FleetxUserPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,9 +19,11 @@ import java.util.stream.Collectors;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository, TenantRepository tenantRepository) {
         this.userRepository = userRepository;
+        this.tenantRepository = tenantRepository;
     }
 
     @Override
@@ -31,13 +36,18 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .map(r -> new SimpleGrantedAuthority(r.getName()))
                 .collect(Collectors.toList());
 
-        return new org.springframework.security.core.userdetails.User(
+        Tenant tenant = tenantRepository.findById(user.getTenantId()).orElse(null);
+        String companyName = tenant != null ? tenant.getCompanyName() : "FleetX Workspace";
+        String warehouseName = tenant != null ? tenant.getWarehouseName() : "Central Warehouse";
+
+        return new FleetxUserPrincipal(
+                user.getId(),
                 user.getEmail(),
+                user.getTenantId(),
+                companyName,
+                warehouseName,
                 user.getPasswordHash(),
-                user.isActive(), // Account enabled check
-                true,            // Account not expired
-                true,            // Credentials not expired
-                true,            // Account not locked
+                user.isActive(),
                 authorities
         );
     }

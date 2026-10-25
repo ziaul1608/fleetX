@@ -16,6 +16,9 @@ public class TrackingLog {
     @Column(name = "vehicle_id", nullable = false)
     private Long vehicleId;
 
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
+
     @Column(name = "trip_id")
     private Long tripId;
 
@@ -50,6 +53,19 @@ public class TrackingLog {
 
     public TrackingLog() {}
 
+    @PrePersist
+    public void onPrePersist() {
+        if (recordedAt == null) {
+            recordedAt = Instant.now();
+        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "TrackingLog");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "TrackingLog");
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -82,4 +98,7 @@ public class TrackingLog {
 
     public Instant getRecordedAt() { return recordedAt; }
     public void setRecordedAt(Instant recordedAt) { this.recordedAt = recordedAt; }
+
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }

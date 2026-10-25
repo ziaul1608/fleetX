@@ -35,20 +35,24 @@ public class AdminUserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
+    private final com.fleetx.auth.repository.TenantRepository tenantRepository;
 
     public AdminUserService(
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            AuditService auditService) {
+            AuditService auditService,
+            com.fleetx.auth.repository.TenantRepository tenantRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
+        this.tenantRepository = tenantRepository;
     }
 
     @Transactional(readOnly = true)
     public PageResponse<UserResponseDto> getUsers(String role, Boolean active, String search, Pageable pageable) {
+        Long tenantId = com.fleetx.shared.context.TenantSecurityContext.getCurrentTenantId();
         String roleFilter = null;
         if (role != null && !role.isBlank()) {
             roleFilter = role.trim().toUpperCase();
@@ -59,7 +63,7 @@ public class AdminUserService {
 
         String searchFilter = (search != null && !search.isBlank()) ? search.trim() : null;
 
-        Page<User> page = userRepository.findWithFilters(roleFilter, active, searchFilter, pageable);
+        Page<User> page = userRepository.findWithFiltersByTenant(tenantId, roleFilter, active, searchFilter, pageable);
 
         List<UserResponseDto> content = page.getContent().stream()
                 .map(this::mapToDto)
@@ -77,13 +81,15 @@ public class AdminUserService {
 
     @Transactional(readOnly = true)
     public UserResponseDto getUserById(Long id) {
-        User user = userRepository.findById(id)
+        Long tenantId = com.fleetx.shared.context.TenantSecurityContext.getCurrentTenantId();
+        User user = userRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
         return mapToDto(user);
     }
 
     @Transactional
     public UserResponseDto createUser(UserCreateRequest request, HttpServletRequest httpRequest, Long performingAdminId) {
+        Long tenantId = com.fleetx.shared.context.TenantSecurityContext.getCurrentTenantId();
         String normalizedEmail = request.email().trim().toLowerCase();
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ResourceConflictException("A user account with email '" + normalizedEmail + "' already exists.");
@@ -91,9 +97,14 @@ public class AdminUserService {
 
         Set<Role> roles = resolveRoles(request.roles());
 
+        String passwordVal = request.password() != null && !request.password().isBlank()
+                ? passwordEncoder.encode(request.password())
+                : null;
+
         User user = new User(
+                tenantId,
                 normalizedEmail,
-                passwordEncoder.encode(request.password()),
+                passwordVal,
                 request.fullName().trim()
         );
         user.setActive(true);
@@ -108,7 +119,7 @@ public class AdminUserService {
                 "USER",
                 savedUser.getId(),
                 clientIp,
-                "{\"email\":\"" + savedUser.getEmail() + "\",\"roles\":\"" + request.roles() + "\"}"
+                "{\"email\":\"" + savedUser.getEmail() + "\",\"roles\":\"" + request.roles() + "\",\"tenantId\":" + tenantId + "}"
         );
 
         return mapToDto(savedUser);
@@ -116,7 +127,8 @@ public class AdminUserService {
 
     @Transactional
     public UserResponseDto updateUser(Long id, UserUpdateRequest request, String currentAdminEmail, HttpServletRequest httpRequest, Long performingAdminId) {
-        User user = userRepository.findById(id)
+        Long tenantId = com.fleetx.shared.context.TenantSecurityContext.getCurrentTenantId();
+        User user = userRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
         boolean isSelf = user.getEmail().equalsIgnoreCase(currentAdminEmail);
@@ -135,9 +147,9 @@ public class AdminUserService {
             );
         }
 
-        // Prevent deactivation of sole active administrator
+        // Prevent deactivation of sole active administrator within the tenant
         if (request.active() != null && !request.active() && isCurrentAdmin && isCurrentActive) {
-            long activeAdminCount = userRepository.countActiveUsersWithRole("ROLE_ADMIN");
+            long activeAdminCount = userRepository.countActiveUsersWithRoleAndTenantId("ROLE_ADMIN", tenantId);
             if (activeAdminCount <= 1) {
                 throw new DomainException(
                         "Cannot deactivate the sole remaining active administrator.",
@@ -147,9 +159,9 @@ public class AdminUserService {
             }
         }
 
-        // Prevent demotion of sole active administrator (self or another admin)
+        // Prevent demotion of sole active administrator within the tenant
         if (isCurrentAdmin && isCurrentActive && !targetHasAdminRole) {
-            long activeAdminCount = userRepository.countActiveUsersWithRole("ROLE_ADMIN");
+            long activeAdminCount = userRepository.countActiveUsersWithRoleAndTenantId("ROLE_ADMIN", tenantId);
             if (activeAdminCount <= 1) {
                 throw new DomainException(
                         "Cannot remove ROLE_ADMIN from account because it is the sole active administrator.",
@@ -182,7 +194,8 @@ public class AdminUserService {
 
     @Transactional
     public UserResponseDto updateUserStatus(Long id, UserStatusUpdateRequest request, String currentAdminEmail, HttpServletRequest httpRequest, Long performingAdminId) {
-        User user = userRepository.findById(id)
+        Long tenantId = com.fleetx.shared.context.TenantSecurityContext.getCurrentTenantId();
+        User user = userRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
         boolean isSelf = user.getEmail().equalsIgnoreCase(currentAdminEmail);
@@ -198,7 +211,7 @@ public class AdminUserService {
 
             boolean isUserAdmin = user.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
             if (isUserAdmin && user.isActive()) {
-                long activeAdminCount = userRepository.countActiveUsersWithRole("ROLE_ADMIN");
+                long activeAdminCount = userRepository.countActiveUsersWithRoleAndTenantId("ROLE_ADMIN", tenantId);
                 if (activeAdminCount <= 1) {
                     throw new DomainException(
                             "Cannot deactivate the sole remaining active administrator.",
@@ -228,20 +241,10 @@ public class AdminUserService {
 
     @Transactional
     public void resetUserPassword(Long id, AdminPasswordResetRequest request, HttpServletRequest httpRequest, Long performingAdminId) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", id));
-
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-        userRepository.save(user);
-
-        String clientIp = extractClientIp(httpRequest);
-        auditService.recordEvent(
-                performingAdminId,
-                "USER_PASSWORD_RESET",
-                "USER",
-                user.getId(),
-                clientIp,
-                "{\"targetEmail\":\"" + user.getEmail() + "\"}"
+        throw new DomainException(
+                "Password management has been retired. Users authenticate securely via Email OTP dispatched to their email.",
+                HttpStatus.BAD_REQUEST,
+                "PASSWORD_AUTH_RETIRED"
         );
     }
 
@@ -279,13 +282,27 @@ public class AdminUserService {
                 .map(r -> r.getName().replace("ROLE_", ""))
                 .collect(Collectors.toList());
 
+        Long tid = user.getTenantId();
+        String companyName = null;
+        String warehouseName = null;
+        if (tid != null) {
+            var tenantOpt = tenantRepository.findById(tid);
+            if (tenantOpt.isPresent()) {
+                companyName = tenantOpt.get().getCompanyName();
+                warehouseName = tenantOpt.get().getWarehouseName();
+            }
+        }
+
         return new UserResponseDto(
                 user.getId(),
                 user.getEmail(),
                 user.getFullName(),
                 roleNames,
                 user.isActive(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                tid,
+                companyName,
+                warehouseName
         );
     }
 

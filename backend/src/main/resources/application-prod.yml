@@ -58,16 +58,21 @@ logging:
 
 # Production Security & Seed Guards
 fleetx:
+  auth:
+    otp:
+      hmac-secret: ${FLEETX_OTP_HMAC_SECRET:fleetx-prod-hmac-secret-replace-via-env-var-32b}
+  mail:
+    from: ${FLEETX_MAIL_FROM:onboarding@resend.dev}
+    resend:
+      api-key: ${RESEND_API_KEY:}
+      api-url: ${RESEND_API_URL:https://api.resend.com/emails}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:https://*.onrender.com,https://fleetx.local,http://localhost:8080,http://127.0.0.1:8080}
   bootstrap:
     admin:
-      # Disabled by default; requires explicit BOOTSTRAP_ADMIN_ENABLED=true and non-empty password
-      enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
-      email: ${BOOTSTRAP_ADMIN_EMAIL:admin@fleetx.local}
-      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
-      full-name: ${BOOTSTRAP_ADMIN_NAME:FleetX Administrator}
-      password-override: ${BOOTSTRAP_ADMIN_PASSWORD_OVERRIDE:false}
+      # STRICTLY DISABLED IN PRODUCTION: FleetX uses passwordless multi-tenant Email OTP authentication.
+      enabled: false
+      password-override: false
   demo:
     seed:
       # STRICTLY DISABLED IN PRODUCTION: No mock vehicles, demo drivers, or test trips

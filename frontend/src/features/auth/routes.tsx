@@ -4,6 +4,7 @@ import { ProtectedRoute } from '../../shared/components/ProtectedRoute';
 import { LoadingState } from '../../shared/components/LoadingState';
 
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const SignupPage = lazy(() => import('./pages/SignupPage').then(m => ({ default: m.SignupPage })));
 const UsersPage = lazy(() => import('./pages/UsersPage').then(m => ({ default: m.UsersPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 
@@ -13,6 +14,14 @@ export const authRoutes: RouteObject[] = [
     element: (
       <Suspense fallback={<LoadingState message="Loading login portal..." />}>
         <LoginPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: 'signup',
+    element: (
+      <Suspense fallback={<LoadingState message="Loading signup portal..." />}>
+        <SignupPage />
       </Suspense>
     ),
   },
