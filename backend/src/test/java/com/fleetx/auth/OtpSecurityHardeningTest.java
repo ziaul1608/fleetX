@@ -25,8 +25,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -216,5 +225,56 @@ public class OtpSecurityHardeningTest {
                         .content(objectMapper.writeValueAsString(verifyReq)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errorCode").value("TENANT_INACTIVE"));
+    }
+
+    @Test
+    @DisplayName("Concurrent OTP verification cannot authenticate the same challenge more than once")
+    void testConcurrentOtpVerificationRaceCondition() throws Exception {
+        // Send Login OTP
+        SendLoginOtpRequest sendReq = new SendLoginOtpRequest("active.owner@warehouse.test");
+        mockMvc.perform(post("/api/v1/auth/otp/send-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sendReq)))
+                .andExpect(status().isOk());
+
+        String otp = mockEmailService.getLastSentOtp("active.owner@warehouse.test").orElseThrow();
+        VerifyLoginOtpRequest verifyReq = new VerifyLoginOtpRequest("active.owner@warehouse.test", otp);
+        String reqBody = objectMapper.writeValueAsString(verifyReq);
+
+        int threads = 4;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger conflictCount = new AtomicInteger(0);
+
+        List<Future<?>> futures = new ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            futures.add(executor.submit(() -> {
+                try {
+                    startLatch.await();
+                    MvcResult result = mockMvc.perform(post("/api/v1/auth/otp/verify-login")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reqBody))
+                            .andReturn();
+                    int status = result.getResponse().getStatus();
+                    if (status == 200) {
+                        successCount.incrementAndGet();
+                    } else if (status == 400 || status == 429) {
+                        conflictCount.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        }
+
+        startLatch.countDown();
+        for (Future<?> f : futures) {
+            f.get(10, TimeUnit.SECONDS);
+        }
+        executor.shutdown();
+
+        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(conflictCount.get()).isEqualTo(threads - 1);
     }
 }

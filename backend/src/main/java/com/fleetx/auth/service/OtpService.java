@@ -157,7 +157,7 @@ public class OtpService {
             throw new DomainException("Verification code must be exactly 6 numeric digits.", HttpStatus.BAD_REQUEST, "INVALID_OTP_FORMAT");
         }
 
-        Optional<OtpChallenge> challengeOpt = otpChallengeRepository.findTopByEmailAndPurposeOrderByIdDesc(normalizedEmail, purpose);
+        Optional<OtpChallenge> challengeOpt = otpChallengeRepository.findFirstByEmailAndPurposeOrderByIdDesc(normalizedEmail, purpose);
         if (challengeOpt.isEmpty()) {
             throw new DomainException("No active verification code found for this email. Please request a new code.",
                     HttpStatus.BAD_REQUEST, "NO_ACTIVE_OTP");
