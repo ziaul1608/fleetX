@@ -12,6 +12,8 @@ import com.fleetx.shared.exception.DomainException;
 import com.fleetx.shared.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +32,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -78,10 +82,14 @@ public class AuthService {
 
         otpService.verifyOtp(normalizedEmail, "SIGNUP", request.otp());
 
-        // 1. Create new Tenant
-        String tenantCode = "TNT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // 1. Create new Tenant with guaranteed collision-safe unique code
+        String tenantCode;
+        do {
+            tenantCode = "TNT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        } while (tenantRepository.existsByTenantCode(tenantCode));
+
         Tenant tenant = new Tenant(tenantCode, request.companyName().trim(), request.warehouseName().trim());
-        tenant = tenantRepository.save(tenant);
+        tenant = tenantRepository.saveAndFlush(tenant);
 
         // 2. Create Primary Admin User inside explicit tenant context
         final Tenant savedTenant = tenant;
@@ -97,15 +105,20 @@ public class AuthService {
                 return roleRepository.save(r);
             });
             u.getRoles().add(adminRole);
-            return userRepository.save(u);
+            return userRepository.saveAndFlush(u);
         });
 
         // 3. Establish Spring Security Session Authentication
         establishSecuritySession(user, tenant, httpRequest);
 
+        // 4. Safe Audit Event Logging with explicit Tenant ID
         String clientIp = extractClientIp(httpRequest);
-        auditService.recordEvent(user.getId(), "TENANT_SIGNUP_SUCCESS", "TENANT", tenant.getId(), clientIp,
-                "{\"tenantCode\":\"" + tenantCode + "\",\"companyName\":\"" + tenant.getCompanyName() + "\"}");
+        try {
+            auditService.recordEvent(savedTenant.getId(), user.getId(), "TENANT_SIGNUP_SUCCESS", "TENANT", savedTenant.getId(), clientIp,
+                    "{\"tenantCode\":\"" + tenantCode + "\",\"companyName\":\"" + tenant.getCompanyName() + "\"}");
+        } catch (Exception ex) {
+            log.warn("[SIGNUP AUDIT WARNING] Could not persist audit log for new tenant #{}: {}", savedTenant.getId(), ex.getMessage());
+        }
 
         return toUserResponseDto(user);
     }

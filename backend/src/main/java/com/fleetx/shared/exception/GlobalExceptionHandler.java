@@ -5,6 +5,7 @@ import com.fleetx.shared.dto.ValidationErrorDto;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -101,6 +102,30 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
+        log.warn("Database integrity violation on {}: {}", request.getRequestURI(), ex.getMessage());
+        String message = "A conflict occurred with an existing record. Please verify your details.";
+        String errorCode = "DATA_CONFLICT";
+        String msgLower = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+        if (msgLower.contains("duplicate") || msgLower.contains("unique")) {
+            if (msgLower.contains("email")) {
+                message = "An account with this email address already exists.";
+                errorCode = "EMAIL_ALREADY_EXISTS";
+            } else {
+                message = "A record with the specified unique values already exists.";
+                errorCode = "DUPLICATE_RECORD";
+            }
+        }
+        ApiErrorResponse error = ApiErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                errorCode,
+                message,
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(Exception.class)

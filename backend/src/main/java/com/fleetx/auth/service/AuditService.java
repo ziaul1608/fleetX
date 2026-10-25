@@ -25,12 +25,12 @@ public class AuditService {
         this.auditLogRepository = auditLogRepository;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void recordEvent(Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
         recordEvent(null, userId, action, entityType, entityId, ipAddress, detailsJson);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void recordEvent(Long explicitTenantId, Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
         try {
             Long tenantId = explicitTenantId != null
