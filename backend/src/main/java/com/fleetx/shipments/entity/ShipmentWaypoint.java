@@ -15,7 +15,7 @@ public class ShipmentWaypoint {
     @Column(name = "shipment_id", nullable = false)
     private Long shipmentId;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @Column(name = "waypoint_name", nullable = false, length = 120)
@@ -51,9 +51,12 @@ public class ShipmentWaypoint {
 
     @PrePersist
     public void onPrePersist() {
-        if (tenantId == null) {
-            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "ShipmentWaypoint");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "ShipmentWaypoint");
     }
 
     public Long getId() { return id; }

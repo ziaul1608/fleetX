@@ -233,7 +233,9 @@ public class OtpLifecycleTest {
         user.setFullName("Marcus Cole");
         user.setActive(true);
         user.setRoles(Set.of(adminRole));
-        userRepository.save(user);
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(tenant.getId(), () -> {
+            userRepository.save(user);
+        });
 
         // 1. Send Login OTP
         SendLoginOtpRequest sendReq = new SendLoginOtpRequest("warehouse.owner@logistics.test");

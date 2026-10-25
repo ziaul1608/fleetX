@@ -63,7 +63,7 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional(readOnly = true)
     public PageResponse<ShipmentResponseDto> searchShipments(String search, String status, Long tripId, Pageable pageable) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Page<Shipment> page = shipmentRepository.findWithFilters(tenantId, search, status, tripId, pageable);
         List<ShipmentResponseDto> content = page.getContent().stream()
                 .map(this::mapToDto)
@@ -87,7 +87,7 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional
     public ShipmentResponseDto createShipment(ShipmentCreateRequest request) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         String trackingNum;
         if (request.trackingNumber() != null && !request.trackingNumber().isBlank()) {
             trackingNum = request.trackingNumber().trim().toUpperCase();
@@ -412,7 +412,7 @@ public class ShipmentService implements ShipmentLookupService {
 
     @Transactional
     public int detectAndFlagDelayedShipments() {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Instant now = Instant.now();
         List<Shipment> overdue = shipmentRepository.findOverdueShipmentsByTenant(tenantId, now);
         for (Shipment s : overdue) {
@@ -474,12 +474,16 @@ public class ShipmentService implements ShipmentLookupService {
     public void recordTripMilestoneForShipments(Long tripId, String locationSummary, String eventType) {
         List<Shipment> shipments = shipmentRepository.findByTripId(tripId);
         for (Shipment s : shipments) {
-            timelineRepository.save(new ShipmentTimelineEvent(
-                    s.getId(),
-                    eventType,
-                    locationSummary,
-                    "Automated trip telemetry milestone for Trip #" + tripId
-            ));
+            TenantSecurityContext.runWithTenant(s.getTenantId(), () -> {
+                ShipmentTimelineEvent event = new ShipmentTimelineEvent(
+                        s.getId(),
+                        eventType,
+                        locationSummary,
+                        "Automated trip telemetry milestone for Trip #" + tripId
+                );
+                event.setTenantId(s.getTenantId());
+                timelineRepository.save(event);
+            });
         }
         log.info("Recorded milestone '{}' at location '{}' for {} shipments on trip #{}",
                 eventType, locationSummary, shipments.size(), tripId);
@@ -545,7 +549,7 @@ public class ShipmentService implements ShipmentLookupService {
         if (idOrTracking == null || idOrTracking.isBlank()) {
             throw new ResourceNotFoundException("Shipment identifier cannot be blank.");
         }
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         String clean = idOrTracking.trim();
         if (clean.matches("^\\d+$")) {
             Long id = Long.parseLong(clean);

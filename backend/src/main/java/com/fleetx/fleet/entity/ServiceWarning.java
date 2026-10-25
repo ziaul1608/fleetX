@@ -11,7 +11,7 @@ public class ServiceWarning {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,9 +49,12 @@ public class ServiceWarning {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
-        if (tenantId == null) {
-            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "ServiceWarning");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "ServiceWarning");
     }
 
     public Long getId() { return id; }

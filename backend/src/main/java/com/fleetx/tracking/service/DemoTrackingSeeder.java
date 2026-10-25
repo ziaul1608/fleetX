@@ -49,63 +49,65 @@ public class DemoTrackingSeeder implements ApplicationRunner {
     }
 
     public void seedDemoGeofencesAndSimulation() {
-        if (!geofenceRepository.existsByNameIgnoreCase("Mumbai Bhiwandi Origin Depot")) {
-            trackingService.createGeofence(new GeofenceCreateRequest(
-                    "Mumbai Bhiwandi Origin Depot",
-                    19.2968,
-                    73.0631,
-                    800.0,
-                    "DEPOT",
-                    "CIRCLE",
-                    null,
-                    65.0
-            ));
-        }
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(1L, () -> {
+            if (!geofenceRepository.existsByNameIgnoreCase("Mumbai Bhiwandi Origin Depot")) {
+                trackingService.createGeofence(new GeofenceCreateRequest(
+                        "Mumbai Bhiwandi Origin Depot",
+                        19.2968,
+                        73.0631,
+                        800.0,
+                        "DEPOT",
+                        "CIRCLE",
+                        null,
+                        65.0
+                ));
+            }
 
-        if (!geofenceRepository.existsByNameIgnoreCase("Pune Hinjawadi Delivery Zone")) {
-            trackingService.createGeofence(new GeofenceCreateRequest(
-                    "Pune Hinjawadi Delivery Zone",
-                    18.5913,
-                    73.7389,
-                    500.0,
-                    "CUSTOMER_HUB",
-                    "POLYGON",
-                    List.of(
-                            List.of(18.6050, 73.7250),
-                            List.of(18.6050, 73.7550),
-                            List.of(18.5750, 73.7550),
-                            List.of(18.5750, 73.7250)
-                    ),
-                    60.0
-            ));
-        }
+            if (!geofenceRepository.existsByNameIgnoreCase("Pune Hinjawadi Delivery Zone")) {
+                trackingService.createGeofence(new GeofenceCreateRequest(
+                        "Pune Hinjawadi Delivery Zone",
+                        18.5913,
+                        73.7389,
+                        500.0,
+                        "CUSTOMER_HUB",
+                        "POLYGON",
+                        List.of(
+                                List.of(18.6050, 73.7250),
+                                List.of(18.6050, 73.7550),
+                                List.of(18.5750, 73.7550),
+                                List.of(18.5750, 73.7250)
+                        ),
+                        60.0
+                ));
+            }
 
-        if (trackingService.getSimulatorSessions().isEmpty()) {
-            for (long candidateTripId = 1L; candidateTripId <= 10L; candidateTripId++) {
-                var tripOpt = tripLookupService.findTripSummaryById(candidateTripId);
-                if (tripOpt.isPresent()) {
-                    TripSummaryDto trip = tripOpt.get();
-                    if ("IN_PROGRESS".equalsIgnoreCase(trip.status()) || "ASSIGNED".equalsIgnoreCase(trip.status()) || "IN_TRANSIT".equalsIgnoreCase(trip.status())) {
-                        SimulatorStartRequest req = new SimulatorStartRequest(
-                                trip.vehicleId(),
-                                trip.id(),
-                                5,
-                                1.0,
-                                58.0,
-                                List.of(
-                                        new SimulatorWaypointDto(19.2968, 73.0631, "Mumbai Bhiwandi Hub (Origin)"),
-                                        new SimulatorWaypointDto(18.7557, 73.4091, "Lonavala Expressway Checkpoint"),
-                                        new SimulatorWaypointDto(18.5913, 73.7389, "Pune Hinjawadi Phase 2 (Destination)")
-                                )
-                        );
-                        trackingService.startSimulation(req);
-                        trackingService.pauseSimulation(trip.vehicleId());
-                        break;
+            if (trackingService.getSimulatorSessions().isEmpty()) {
+                for (long candidateTripId = 1L; candidateTripId <= 10L; candidateTripId++) {
+                    var tripOpt = tripLookupService.findTripSummaryById(candidateTripId);
+                    if (tripOpt.isPresent()) {
+                        TripSummaryDto trip = tripOpt.get();
+                        if ("IN_PROGRESS".equalsIgnoreCase(trip.status()) || "ASSIGNED".equalsIgnoreCase(trip.status()) || "IN_TRANSIT".equalsIgnoreCase(trip.status())) {
+                            SimulatorStartRequest req = new SimulatorStartRequest(
+                                    trip.vehicleId(),
+                                    trip.id(),
+                                    5,
+                                    1.0,
+                                    58.0,
+                                    List.of(
+                                            new SimulatorWaypointDto(19.2968, 73.0631, "Mumbai Bhiwandi Hub (Origin)"),
+                                            new SimulatorWaypointDto(18.7557, 73.4091, "Lonavala Expressway Checkpoint"),
+                                            new SimulatorWaypointDto(18.5913, 73.7389, "Pune Hinjawadi Phase 2 (Destination)")
+                                    )
+                            );
+                            trackingService.startSimulation(req);
+                            trackingService.pauseSimulation(trip.vehicleId());
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        log.info("[DemoTrackingSeeder] Repeatable development geofences and simulated GPS session verified.");
+            log.info("[DemoTrackingSeeder] Repeatable development geofences and simulated GPS session verified.");
+        });
     }
 }

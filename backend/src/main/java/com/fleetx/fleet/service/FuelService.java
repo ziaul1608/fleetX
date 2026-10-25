@@ -55,7 +55,7 @@ public class FuelService {
      */
     @Transactional
     public FuelRecordResponseDto recordFueling(Long vehicleId, FuelRecordCreateRequest request) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Vehicle vehicle = vehicleRepository.findByIdAndTenantId(vehicleId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", vehicleId));
 
@@ -146,10 +146,7 @@ public class FuelService {
 
     @Transactional(readOnly = true)
     public Page<FuelRecordResponseDto> getRecordsByVehicle(Long vehicleId, Pageable pageable) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        if (!vehicleRepository.existsById(vehicleId)) {
-            throw new ResourceNotFoundException("Vehicle", vehicleId);
-        }
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Vehicle vehicle = vehicleRepository.findByIdAndTenantId(vehicleId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", vehicleId));
         return fuelRepository.findByVehicleIdOrderByFuelDateDesc(vehicle.getId(), pageable)

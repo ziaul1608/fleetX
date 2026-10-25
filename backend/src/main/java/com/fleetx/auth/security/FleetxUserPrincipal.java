@@ -39,9 +39,9 @@ public class FleetxUserPrincipal implements UserDetails {
         this(
                 user.getId(),
                 user.getEmail(),
-                user.getTenantId() != null ? user.getTenantId() : (tenant != null ? tenant.getId() : 1L),
-                tenant != null ? tenant.getCompanyName() : "FleetX Global Logistics",
-                tenant != null ? tenant.getWarehouseName() : "Central Warehouse",
+                user.getTenantId() != null ? user.getTenantId() : (tenant != null ? tenant.getId() : null),
+                tenant != null ? tenant.getCompanyName() : "FleetX Logistics",
+                tenant != null ? tenant.getWarehouseName() : "Warehouse Hub",
                 user.getPasswordHash(),
                 user.isActive(),
                 user.getRoles().stream()

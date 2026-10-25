@@ -86,23 +86,27 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         Role adminRole = roleRepository.findByName("ROLE_ADMIN")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN", "System Administrator with full access")));
 
-        User adminUser = new User(
-                normalizedEmail,
-                passwordEncoder.encode(adminPassword.trim()),
-                adminFullName.trim()
-        );
-        adminUser.setActive(true);
-        adminUser.setRoles(Set.of(adminRole));
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(1L, () -> {
+            User adminUser = new User(
+                    1L,
+                    normalizedEmail,
+                    passwordEncoder.encode(adminPassword.trim()),
+                    adminFullName.trim()
+            );
+            adminUser.setActive(true);
+            adminUser.setRoles(Set.of(adminRole));
 
-        User saved = userRepository.save(adminUser);
-        auditService.recordEvent(
-                saved.getId(),
-                "ADMIN_BOOTSTRAP_INITIALIZED",
-                "USER",
-                saved.getId(),
-                "127.0.0.1",
-                "{\"bootstrap\":true,\"email\":\"" + normalizedEmail + "\"}"
-        );
+            User saved = userRepository.save(adminUser);
+            auditService.recordEvent(
+                    1L,
+                    saved.getId(),
+                    "ADMIN_BOOTSTRAP_INITIALIZED",
+                    "USER",
+                    saved.getId(),
+                    "127.0.0.1",
+                    "{\"bootstrap\":true,\"email\":\"" + normalizedEmail + "\"}"
+            );
+        });
 
         log.info("[AdminBootstrap] Successfully bootstrapped initial administrator: {} (Role: ROLE_ADMIN)", normalizedEmail);
     }

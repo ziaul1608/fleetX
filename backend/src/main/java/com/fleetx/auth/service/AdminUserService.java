@@ -282,11 +282,11 @@ public class AdminUserService {
                 .map(r -> r.getName().replace("ROLE_", ""))
                 .collect(Collectors.toList());
 
-        Long tid = user.getTenantId() != null ? user.getTenantId() : 1L;
-        String companyName = "FleetX Global Logistics";
-        String warehouseName = "Central Warehouse";
-        if (user.getTenantId() != null) {
-            var tenantOpt = tenantRepository.findById(user.getTenantId());
+        Long tid = user.getTenantId();
+        String companyName = null;
+        String warehouseName = null;
+        if (tid != null) {
+            var tenantOpt = tenantRepository.findById(tid);
             if (tenantOpt.isPresent()) {
                 companyName = tenantOpt.get().getCompanyName();
                 warehouseName = tenantOpt.get().getWarehouseName();

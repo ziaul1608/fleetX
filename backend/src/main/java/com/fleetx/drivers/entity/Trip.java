@@ -48,7 +48,7 @@ public class Trip {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -68,14 +68,13 @@ public class Trip {
         if (status == null) {
             status = "PLANNED";
         }
-        if (tenantId == null) {
-            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "Trip");
     }
 
     @PreUpdate
     public void onPreUpdate() {
         updatedAt = Instant.now();
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "Trip");
     }
 
     public Long getId() { return id; }

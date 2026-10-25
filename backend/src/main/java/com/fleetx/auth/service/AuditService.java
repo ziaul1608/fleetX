@@ -27,12 +27,27 @@ public class AuditService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordEvent(Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
+        recordEvent(null, userId, action, entityType, entityId, ipAddress, detailsJson);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordEvent(Long explicitTenantId, Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
         try {
-            Long tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-            AuditLog auditLog = new AuditLog(tenantId, userId, action, entityType, entityId, ipAddress, detailsJson);
-            auditLogRepository.save(auditLog);
-            log.info("[AUDIT] Tenant: #{} | Action: {} | User: #{} | Entity: {} #{} | IP: {}",
-                    tenantId, action, userId, entityType, entityId, ipAddress);
+            Long tenantId = explicitTenantId != null
+                    ? explicitTenantId
+                    : com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(null);
+
+            if (tenantId != null) {
+                com.fleetx.shared.context.TenantSecurityContext.runWithTenant(tenantId, () -> {
+                    AuditLog auditLog = new AuditLog(tenantId, userId, action, entityType, entityId, ipAddress, detailsJson);
+                    auditLogRepository.save(auditLog);
+                });
+                log.info("[AUDIT] Tenant: #{} | Action: {} | User: #{} | Entity: {} #{} | IP: {}",
+                        tenantId, action, userId, entityType, entityId, ipAddress);
+            } else {
+                log.info("[SYSTEM AUDIT] Action: {} | User: #{} | Entity: {} #{} | IP: {} | Details: {}",
+                        action, userId, entityType, entityId, ipAddress, detailsJson);
+            }
         } catch (Exception ex) {
             log.error("[AUDIT ERROR] Failed to persist audit log for action: " + action, ex);
         }

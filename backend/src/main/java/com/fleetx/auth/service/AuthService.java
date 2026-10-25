@@ -83,19 +83,22 @@ public class AuthService {
         Tenant tenant = new Tenant(tenantCode, request.companyName().trim(), request.warehouseName().trim());
         tenant = tenantRepository.save(tenant);
 
-        // 2. Create Primary Admin User
-        User user = new User();
-        user.setTenantId(tenant.getId());
-        user.setEmail(normalizedEmail);
-        user.setFullName(request.fullName().trim());
-        user.setActive(true);
+        // 2. Create Primary Admin User inside explicit tenant context
+        final Tenant savedTenant = tenant;
+        User user = com.fleetx.shared.context.TenantSecurityContext.executeWithTenant(savedTenant.getId(), () -> {
+            User u = new User();
+            u.setTenantId(savedTenant.getId());
+            u.setEmail(normalizedEmail);
+            u.setFullName(request.fullName().trim());
+            u.setActive(true);
 
-        Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElseGet(() -> {
-            Role r = new Role("ROLE_ADMIN", "Tenant Administrator");
-            return roleRepository.save(r);
+            Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElseGet(() -> {
+                Role r = new Role("ROLE_ADMIN", "Tenant Administrator");
+                return roleRepository.save(r);
+            });
+            u.getRoles().add(adminRole);
+            return userRepository.save(u);
         });
-        user.getRoles().add(adminRole);
-        user = userRepository.save(user);
 
         // 3. Establish Spring Security Session Authentication
         establishSecuritySession(user, tenant, httpRequest);
@@ -199,8 +202,8 @@ public class AuthService {
         Tenant tenant = user.getTenantId() != null
                 ? tenantRepository.findById(user.getTenantId()).orElse(null)
                 : null;
-        String companyName = tenant != null ? tenant.getCompanyName() : "FleetX Global Logistics";
-        String warehouseName = tenant != null ? tenant.getWarehouseName() : "Central Warehouse";
+        String companyName = tenant != null ? tenant.getCompanyName() : null;
+        String warehouseName = tenant != null ? tenant.getWarehouseName() : null;
 
         return new UserResponseDto(
                 user.getId(),
@@ -209,7 +212,7 @@ public class AuthService {
                 roleNames,
                 user.isActive(),
                 user.getCreatedAt(),
-                user.getTenantId() != null ? user.getTenantId() : 1L,
+                user.getTenantId(),
                 companyName,
                 warehouseName
         );

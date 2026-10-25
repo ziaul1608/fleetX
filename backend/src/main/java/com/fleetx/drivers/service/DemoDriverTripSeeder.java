@@ -63,63 +63,65 @@ public class DemoDriverTripSeeder implements ApplicationRunner {
 
     @Transactional
     public void seedDemoDriversAndTrips() {
-        DriverResponseDto d1;
-        var existingD1 = driverRepository.findByLicenseNumber("DL-MH1220260001");
-        if (existingD1.isEmpty()) {
-            d1 = driverService.createDriver(new DriverCreateRequest(
-                    null,
-                    "Rajesh Sharma",
-                    "+91 98220 11001",
-                    "driver.rajesh@fleetx.local",
-                    "DL-MH1220260001",
-                    "HEAVY",
-                    LocalDate.now().plusYears(3),
-                    LocalDate.now().plusYears(1),
-                    9,
-                    "AVAILABLE",
-                    "Certified hazmat & expressway heavy commercial driver"
-            ));
-        } else {
-            d1 = driverService.getDriverById(existingD1.get().getId());
-        }
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(1L, () -> {
+            DriverResponseDto d1;
+            var existingD1 = driverRepository.findByLicenseNumber("DL-MH1220260001");
+            if (existingD1.isEmpty()) {
+                d1 = driverService.createDriver(new DriverCreateRequest(
+                        null,
+                        "Rajesh Sharma",
+                        "+91 98220 11001",
+                        "driver.rajesh@fleetx.local",
+                        "DL-MH1220260001",
+                        "HEAVY",
+                        LocalDate.now().plusYears(3),
+                        LocalDate.now().plusYears(1),
+                        9,
+                        "AVAILABLE",
+                        "Certified hazmat & expressway heavy commercial driver"
+                ));
+            } else {
+                d1 = driverService.getDriverById(existingD1.get().getId());
+            }
 
-        if (driverRepository.findByLicenseNumber("DL-MH1420260002").isEmpty()) {
-            driverService.createDriver(new DriverCreateRequest(
-                    null,
-                    "Vikram Deshmukh",
-                    "+91 98220 22002",
-                    "driver.vikram@fleetx.local",
-                    "DL-MH1420260002",
-                    "HEAVY",
-                    LocalDate.now().plusYears(2),
-                    LocalDate.now().plusMonths(9),
-                    6,
-                    "AVAILABLE",
-                    "Regional Maharashtra corridor operator"
-            ));
-        }
+            if (driverRepository.findByLicenseNumber("DL-MH1420260002").isEmpty()) {
+                driverService.createDriver(new DriverCreateRequest(
+                        null,
+                        "Vikram Deshmukh",
+                        "+91 98220 22002",
+                        "driver.vikram@fleetx.local",
+                        "DL-MH1420260002",
+                        "HEAVY",
+                        LocalDate.now().plusYears(2),
+                        LocalDate.now().plusMonths(9),
+                        6,
+                        "AVAILABLE",
+                        "Regional Maharashtra corridor operator"
+                ));
+            }
 
-        if (tripRepository.count() == 0 && "AVAILABLE".equalsIgnoreCase(d1.availabilityStatus())) {
-            for (long candidateVehicleId = 1L; candidateVehicleId <= 10L; candidateVehicleId++) {
-                var vehicleOpt = vehicleLookupService.findVehicleSummaryById(candidateVehicleId);
-                if (vehicleOpt.isPresent() && vehicleLookupService.isVehicleAvailableForTrip(candidateVehicleId)) {
-                    VehicleSummaryDto primaryVehicle = vehicleOpt.get();
-                    TripResponseDto trip = tripService.createTrip(new TripCreateRequest(
-                            primaryVehicle.id(),
-                            d1.id(),
-                            "Mumbai Bhiwandi Logistics Hub, NH-48",
-                            "Pune Hinjawadi Phase 2 Distribution Center",
-                            Instant.now().minus(1, ChronoUnit.HOURS),
-                            Instant.now().plus(3, ChronoUnit.HOURS),
-                            new BigDecimal("148.50"),
-                            "Express electronics corridor dispatch"
-                    ));
-                    tripService.updateTripStatus(trip.id(), "IN_PROGRESS", "Departed Bhiwandi Hub on schedule.", null);
-                    break;
+            if (tripRepository.count() == 0 && "AVAILABLE".equalsIgnoreCase(d1.availabilityStatus())) {
+                for (long candidateVehicleId = 1L; candidateVehicleId <= 10L; candidateVehicleId++) {
+                    var vehicleOpt = vehicleLookupService.findVehicleSummaryById(candidateVehicleId);
+                    if (vehicleOpt.isPresent() && vehicleLookupService.isVehicleAvailableForTrip(candidateVehicleId)) {
+                        VehicleSummaryDto primaryVehicle = vehicleOpt.get();
+                        TripResponseDto trip = tripService.createTrip(new TripCreateRequest(
+                                primaryVehicle.id(),
+                                d1.id(),
+                                "Mumbai Bhiwandi Logistics Hub, NH-48",
+                                "Pune Hinjawadi Phase 2 Distribution Center",
+                                Instant.now().minus(1, ChronoUnit.HOURS),
+                                Instant.now().plus(3, ChronoUnit.HOURS),
+                                new BigDecimal("148.50"),
+                                "Express electronics corridor dispatch"
+                        ));
+                        tripService.updateTripStatus(trip.id(), "IN_PROGRESS", "Departed Bhiwandi Hub on schedule.", null);
+                        break;
+                    }
                 }
             }
-        }
 
-        log.info("[DemoDriverTripSeeder] Repeatable development drivers and trip dispatches verified.");
+            log.info("[DemoDriverTripSeeder] Repeatable development drivers and trip dispatches verified.");
+        });
     }
 }

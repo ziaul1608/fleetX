@@ -25,7 +25,7 @@ public class ControlTowerReadRepository {
     }
 
     private Long currentTenant() {
-        return TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        return TenantSecurityContext.requireTenantId();
     }
 
     public Map<String, Long> countVehiclesByStatus() {

@@ -86,21 +86,25 @@ public class OtpSecurityHardeningTest {
         Role adminRole = roleRepository.findByName("ROLE_ADMIN")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN", "Admin")));
 
-        activeUser = new User();
-        activeUser.setTenantId(activeTenant.getId());
-        activeUser.setEmail("active.owner@warehouse.test");
-        activeUser.setFullName("Active Owner");
-        activeUser.setActive(true);
-        activeUser.setRoles(Set.of(adminRole));
-        activeUser = userRepository.save(activeUser);
+        activeUser = com.fleetx.shared.context.TenantSecurityContext.executeWithTenant(activeTenant.getId(), () -> {
+            User u = new User();
+            u.setTenantId(activeTenant.getId());
+            u.setEmail("active.owner@warehouse.test");
+            u.setFullName("Active Owner");
+            u.setActive(true);
+            u.setRoles(Set.of(adminRole));
+            return userRepository.save(u);
+        });
 
-        deactivatedUser = new User();
-        deactivatedUser.setTenantId(activeTenant.getId());
-        deactivatedUser.setEmail("deactivated.owner@warehouse.test");
-        deactivatedUser.setFullName("Deactivated Owner");
-        deactivatedUser.setActive(false);
-        deactivatedUser.setRoles(Set.of(adminRole));
-        deactivatedUser = userRepository.save(deactivatedUser);
+        deactivatedUser = com.fleetx.shared.context.TenantSecurityContext.executeWithTenant(activeTenant.getId(), () -> {
+            User u = new User();
+            u.setTenantId(activeTenant.getId());
+            u.setEmail("deactivated.owner@warehouse.test");
+            u.setFullName("Deactivated Owner");
+            u.setActive(false);
+            u.setRoles(Set.of(adminRole));
+            return userRepository.save(u);
+        });
     }
 
     @Test
@@ -192,8 +196,9 @@ public class OtpSecurityHardeningTest {
         suspendedTenantUser.setEmail("suspended.owner@warehouse.test");
         suspendedTenantUser.setFullName("Suspended Owner");
         suspendedTenantUser.setActive(true);
-        suspendedTenantUser.setRoles(Set.of(adminRole));
-        userRepository.save(suspendedTenantUser);
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(suspendedTenant.getId(), () -> {
+            userRepository.save(suspendedTenantUser);
+        });
 
         // Send Login OTP
         SendLoginOtpRequest sendReq = new SendLoginOtpRequest("suspended.owner@warehouse.test");

@@ -14,7 +14,7 @@ public class ShipmentTimelineEvent {
     @Column(name = "shipment_id", nullable = false)
     private Long shipmentId;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @Column(name = "event_type", nullable = false, length = 50)
@@ -44,9 +44,12 @@ public class ShipmentTimelineEvent {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
-        if (tenantId == null) {
-            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "ShipmentTimelineEvent");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "ShipmentTimelineEvent");
     }
 
     public Long getId() { return id; }

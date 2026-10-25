@@ -46,7 +46,7 @@ public class TrackingService implements AlertPublisher {
     private static final Logger log = LoggerFactory.getLogger(TrackingService.class);
 
     private Long currentTenant() {
-        return TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        return TenantSecurityContext.requireTenantId();
     }
 
     public static final String SIMULATED_DATA_DISCLAIMER =
@@ -442,9 +442,11 @@ public class TrackingService implements AlertPublisher {
         ScheduledFuture<?> future = simulatorExecutor.scheduleAtFixedRate(
                 () -> {
                     try {
-                        if ("RUNNING".equals(state.simulatorStatus)) {
-                            advanceWorkerOneTick(state);
-                        }
+                        TenantSecurityContext.runWithTenant(state.tenantId, () -> {
+                            if ("RUNNING".equals(state.simulatorStatus)) {
+                                advanceWorkerOneTick(state);
+                            }
+                        });
                     } catch (Exception ex) {
                         log.warn("Simulator tick error for vehicle #{}: {}", state.vehicleId, ex.getMessage());
                     }

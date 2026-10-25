@@ -16,7 +16,7 @@ public class Geofence {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @JdbcTypeCode(SqlTypes.DECIMAL)
@@ -57,9 +57,12 @@ public class Geofence {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
-        if (tenantId == null) {
-            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "Geofence");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "Geofence");
     }
 
     public Long getId() { return id; }

@@ -15,7 +15,7 @@ public class DriverPerformanceMetrics {
     @Column(name = "driver_id", nullable = false, unique = true)
     private Long driverId;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @Column(name = "total_trips_completed", nullable = false)
@@ -57,9 +57,12 @@ public class DriverPerformanceMetrics {
         if (lastCalculatedAt == null) {
             lastCalculatedAt = Instant.now();
         }
-        if (tenantId == null) {
-            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "DriverPerformanceMetrics");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "DriverPerformanceMetrics");
     }
 
     public Long getId() { return id; }

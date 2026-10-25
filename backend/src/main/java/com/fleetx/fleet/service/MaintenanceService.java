@@ -49,7 +49,7 @@ public class MaintenanceService {
 
     @Transactional
     public MaintenanceRecordResponseDto recordMaintenance(Long vehicleId, MaintenanceRecordCreateRequest request) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Vehicle vehicle = vehicleRepository.findByIdAndTenantId(vehicleId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", vehicleId));
 
@@ -104,10 +104,7 @@ public class MaintenanceService {
 
     @Transactional(readOnly = true)
     public Page<MaintenanceRecordResponseDto> getRecordsByVehicle(Long vehicleId, Pageable pageable) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        if (!vehicleRepository.existsById(vehicleId)) {
-            throw new ResourceNotFoundException("Vehicle", vehicleId);
-        }
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Vehicle vehicle = vehicleRepository.findByIdAndTenantId(vehicleId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", vehicleId));
         return maintenanceRepository.findByVehicleIdOrderByServiceDateDesc(vehicle.getId(), pageable)
@@ -116,14 +113,14 @@ public class MaintenanceService {
 
     @Transactional(readOnly = true)
     public Page<MaintenanceRecordResponseDto> getAllRecords(Pageable pageable) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         return maintenanceRepository.findByTenantIdOrderByServiceDateDesc(tenantId, pageable)
                 .map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
     public List<ServiceWarningResponseDto> getActiveWarnings() {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         return warningRepository.findByTenantIdAndResolvedFalseOrderByCreatedAtDesc(tenantId).stream()
                 .map(this::mapWarningToDto)
                 .collect(Collectors.toList());

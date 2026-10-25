@@ -45,7 +45,7 @@ public class DriverService implements DriverLookupService {
 
     @Transactional(readOnly = true)
     public List<DriverResponseDto> findAllDrivers() {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         return driverRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -53,7 +53,7 @@ public class DriverService implements DriverLookupService {
 
     @Transactional(readOnly = true)
     public PageResponse<DriverResponseDto> searchDrivers(String search, String availability, Boolean active, Pageable pageable) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Page<Driver> page = driverRepository.findWithFilters(tenantId, search, availability, active, pageable);
         List<DriverResponseDto> content = page.getContent().stream()
                 .map(this::mapToDto)
@@ -71,7 +71,7 @@ public class DriverService implements DriverLookupService {
 
     @Transactional(readOnly = true)
     public DriverResponseDto getDriverById(Long id) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Driver driver = driverRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver", id));
         return mapToDto(driver);
@@ -79,7 +79,7 @@ public class DriverService implements DriverLookupService {
 
     @Transactional
     public DriverResponseDto createDriver(DriverCreateRequest request) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         String cleanLicense = request.licenseNumber().trim().toUpperCase();
         if (driverRepository.existsByTenantIdAndLicenseNumber(tenantId, cleanLicense)) {
             throw new DomainException("A driver with license number '" + cleanLicense + "' already exists.",
@@ -136,7 +136,7 @@ public class DriverService implements DriverLookupService {
 
     @Transactional
     public DriverResponseDto updateDriver(Long id, DriverUpdateRequest request) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Driver driver = driverRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver", id));
 
@@ -173,7 +173,7 @@ public class DriverService implements DriverLookupService {
 
     @Transactional
     public DriverResponseDto updateDriverAvailability(Long id, String status) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Driver driver = driverRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver", id));
 

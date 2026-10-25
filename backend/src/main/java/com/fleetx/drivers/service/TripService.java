@@ -63,7 +63,7 @@ public class TripService implements TripLookupService {
 
     @Transactional(readOnly = true)
     public PageResponse<TripResponseDto> searchTrips(String search, String status, Long driverId, Long vehicleId, Pageable pageable) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Page<Trip> page = tripRepository.findWithFilters(tenantId, search, status, driverId, vehicleId, pageable);
         List<TripResponseDto> content = page.getContent().stream()
                 .map(this::mapToDto)
@@ -81,7 +81,7 @@ public class TripService implements TripLookupService {
 
     @Transactional(readOnly = true)
     public TripResponseDto getTripById(Long id) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Trip trip = tripRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip", id));
         return mapToDto(trip);
@@ -89,7 +89,7 @@ public class TripService implements TripLookupService {
 
     @Transactional(readOnly = true)
     public List<TripStatusHistoryResponseDto> getTripHistory(Long tripId) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         if (!tripRepository.existsByIdAndTenantId(tripId, tenantId)) {
             throw new ResourceNotFoundException("Trip", tripId);
         }
@@ -108,7 +108,7 @@ public class TripService implements TripLookupService {
 
     @Transactional
     public TripResponseDto createTrip(TripCreateRequest request) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
 
         // Validate vehicle availability via shared VehicleLookupService
         boolean vehicleAvailable = vehicleLookupService.isVehicleAvailableForTrip(request.vehicleId());
@@ -176,7 +176,7 @@ public class TripService implements TripLookupService {
 
     @Transactional
     public TripResponseDto updateTripStatus(Long tripId, String targetStatusStr, String remarks, Long updatedBy) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Trip trip = tripRepository.findByIdAndTenantId(tripId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip", tripId));
 

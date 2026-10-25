@@ -59,10 +59,10 @@ class MySQL8PersistenceIntegrationTest {
     }
 
     @Test
-    @DisplayName("Verify all 10 Flyway migrations are recorded and active on MySQL 8.4 schema")
+    @DisplayName("Verify all 12 Flyway migrations are recorded and active on MySQL 8.4 schema")
     void testFlywayMigrationsOnMySQL() {
         MigrationInfo[] applied = flyway.info().applied();
-        assertThat(applied).hasSize(10);
+        assertThat(applied).hasSize(12);
 
         List<String> versions = Arrays.stream(applied)
                 .map(info -> info.getVersion().getVersion())
@@ -72,7 +72,8 @@ class MySQL8PersistenceIntegrationTest {
                 "200", "201",
                 "300", "301",
                 "400", "401",
-                "500", "501"
+                "500", "501",
+                "600", "601"
         );
     }
 
@@ -80,6 +81,7 @@ class MySQL8PersistenceIntegrationTest {
     @DisplayName("Verify MySQL 8.4 table schema existence and foreign keys")
     void testTableExistenceAndSchema() throws Exception {
         List<String> expectedTables = List.of(
+                "tenants", "otp_challenges",
                 "users", "roles", "user_roles", "audit_logs",
                 "vehicles", "fuel_records", "maintenance_records", "service_warnings",
                 "drivers", "trips", "trip_status_history", "driver_performance_metrics",

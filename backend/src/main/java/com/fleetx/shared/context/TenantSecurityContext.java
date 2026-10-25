@@ -7,7 +7,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
+/**
+ * Manages tenant execution context fail-closed.
+ * Guarantees that tenant-scoped operations cannot silently fall back to a default tenant.
+ */
 public final class TenantSecurityContext {
 
     private static final ThreadLocal<Long> TENANT_OVERRIDE = new ThreadLocal<>();
@@ -15,11 +20,47 @@ public final class TenantSecurityContext {
     private TenantSecurityContext() {}
 
     public static void setTenantId(Long tenantId) {
-        TENANT_OVERRIDE.set(tenantId);
+        if (tenantId == null) {
+            TENANT_OVERRIDE.remove();
+        } else {
+            TENANT_OVERRIDE.set(tenantId);
+        }
     }
 
     public static void clear() {
         TENANT_OVERRIDE.remove();
+    }
+
+    public static Long getExplicitTenantOverride() {
+        return TENANT_OVERRIDE.get();
+    }
+
+    /**
+     * Executes the supplied action within an explicit, trusted tenant context,
+     * restoring any previous context and guaranteeing cleanup in a finally block.
+     */
+    public static <T> T executeWithTenant(Long tenantId, Supplier<T> supplier) {
+        Long previous = TENANT_OVERRIDE.get();
+        setTenantId(tenantId);
+        try {
+            return supplier.get();
+        } finally {
+            setTenantId(previous);
+        }
+    }
+
+    /**
+     * Runs the supplied runnable within an explicit, trusted tenant context,
+     * restoring any previous context and guaranteeing cleanup in a finally block.
+     */
+    public static void runWithTenant(Long tenantId, Runnable runnable) {
+        Long previous = TENANT_OVERRIDE.get();
+        setTenantId(tenantId);
+        try {
+            runnable.run();
+        } finally {
+            setTenantId(previous);
+        }
     }
 
     public static Long getCurrentTenantId() {
@@ -44,18 +85,13 @@ public final class TenantSecurityContext {
             return tid;
         }
 
-        // For tests using @WithMockUser or mock principals where explicit tenantId was not bound:
-        // Default to legacy tenant 1L if available
-        return 1L;
+        // Fail closed: Do NOT fall back to any default tenant.
+        throw new DomainException("Active tenant context is required for this operation.",
+                HttpStatus.BAD_REQUEST, "TENANT_CONTEXT_REQUIRED");
     }
 
     public static Long requireTenantId() {
-        Long tenantId = getCurrentTenantId();
-        if (tenantId == null) {
-            throw new DomainException("Active tenant context is required for this operation.",
-                    HttpStatus.BAD_REQUEST, "TENANT_CONTEXT_REQUIRED");
-        }
-        return tenantId;
+        return getCurrentTenantId();
     }
 
     public static Optional<Long> getOptionalTenantId() {
@@ -74,6 +110,53 @@ public final class TenantSecurityContext {
             return Optional.ofNullable(userPrincipal.getTenantId());
         }
 
-        return Optional.of(1L);
+        // Fail closed: No default tenant fallback.
+        return Optional.empty();
+    }
+
+    /**
+     * Validates and assigns tenant ID for entity persistence (@PrePersist).
+     * Rejects missing tenant context with 400 (TENANT_CONTEXT_REQUIRED).
+     * Rejects mismatched tenant context with 403 (TENANT_ACCESS_DENIED).
+     */
+    public static Long validateAndAssignTenantForPersist(Long currentEntityTenantId, String entityName) {
+        Long activeTenantId = getOptionalTenantId().orElse(null);
+        if (activeTenantId == null) {
+            throw new DomainException(
+                    "Explicit tenant context is required to persist " + entityName + ".",
+                    HttpStatus.BAD_REQUEST, "TENANT_CONTEXT_REQUIRED"
+            );
+        }
+        if (currentEntityTenantId == null) {
+            return activeTenantId;
+        }
+        if (!currentEntityTenantId.equals(activeTenantId)) {
+            throw new DomainException(
+                    "Mismatched tenant ID: entity tenant (" + currentEntityTenantId + ") does not match authenticated tenant (" + activeTenantId + ").",
+                    HttpStatus.FORBIDDEN, "TENANT_ACCESS_DENIED"
+            );
+        }
+        return currentEntityTenantId;
+    }
+
+    /**
+     * Validates tenant ID for entity updates (@PreUpdate).
+     * Rejects missing tenant context with 400 (TENANT_CONTEXT_REQUIRED).
+     * Rejects tenant reassignment attempts with 403 (TENANT_ACCESS_DENIED).
+     */
+    public static void validateTenantForUpdate(Long currentEntityTenantId, String entityName) {
+        Long activeTenantId = getOptionalTenantId().orElse(null);
+        if (activeTenantId == null) {
+            throw new DomainException(
+                    "Explicit tenant context is required to update " + entityName + ".",
+                    HttpStatus.BAD_REQUEST, "TENANT_CONTEXT_REQUIRED"
+            );
+        }
+        if (currentEntityTenantId != null && !currentEntityTenantId.equals(activeTenantId)) {
+            throw new DomainException(
+                    "Cannot reassign " + entityName + " to a different tenant.",
+                    HttpStatus.FORBIDDEN, "TENANT_ACCESS_DENIED"
+            );
+        }
     }
 }

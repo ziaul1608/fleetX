@@ -52,7 +52,7 @@ public class Vehicle {
     @Column(nullable = false)
     private Boolean active = true;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -92,14 +92,13 @@ public class Vehicle {
         if (odometerKm == null) {
             odometerKm = 0.0;
         }
-        if (tenantId == null) {
-            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "Vehicle");
     }
 
     @PreUpdate
     public void onPreUpdate() {
         updatedAt = Instant.now();
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "Vehicle");
     }
 
     public Long getId() { return id; }

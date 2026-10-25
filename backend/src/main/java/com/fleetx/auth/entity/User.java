@@ -13,7 +13,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @Column(nullable = false, unique = true, length = 180)
@@ -45,7 +45,6 @@ public class User {
     public User() {}
 
     public User(String email, String passwordHash, String fullName) {
-        this.tenantId = 1L;
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
@@ -64,14 +63,13 @@ public class User {
             this.createdAt = Instant.now();
         }
         this.updatedAt = Instant.now();
-        if (this.tenantId == null) {
-            this.tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "User");
     }
 
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = Instant.now();
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "User");
     }
 
     public Long getId() { return id; }

@@ -74,13 +74,15 @@ public class AuthLifecycleTest {
         Role adminRole = roleRepository.findByName("ROLE_ADMIN")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN", "Admin")));
 
-        activeAdmin = new User();
-        activeAdmin.setTenantId(tenant.getId());
-        activeAdmin.setEmail("admin@fleetx.test");
-        activeAdmin.setFullName("Admin User");
-        activeAdmin.setActive(true);
-        activeAdmin.setRoles(Set.of(adminRole));
-        activeAdmin = userRepository.save(activeAdmin);
+        activeAdmin = com.fleetx.shared.context.TenantSecurityContext.executeWithTenant(tenant.getId(), () -> {
+            User u = new User();
+            u.setTenantId(tenant.getId());
+            u.setEmail("admin@fleetx.test");
+            u.setFullName("Admin User");
+            u.setActive(true);
+            u.setRoles(Set.of(adminRole));
+            return userRepository.save(u);
+        });
     }
 
     private MockHttpSession createAuthenticatedSession(User user, Tenant userTenant) {

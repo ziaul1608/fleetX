@@ -80,38 +80,46 @@ public class AdminCrossTenantStaffIsolationTest {
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_DRIVER", "Driver")));
 
         // Tenant A: 1 Admin, 1 Driver
-        adminA = new User();
-        adminA.setTenantId(tenantA.getId());
-        adminA.setEmail("admin@tenant-a.test");
-        adminA.setFullName("Admin A");
-        adminA.setActive(true);
-        adminA.setRoles(Set.of(adminRole));
-        adminA = userRepository.save(adminA);
+        adminA = com.fleetx.shared.context.TenantSecurityContext.executeWithTenant(tenantA.getId(), () -> {
+            User u = new User();
+            u.setTenantId(tenantA.getId());
+            u.setEmail("admin@tenant-a.test");
+            u.setFullName("Admin A");
+            u.setActive(true);
+            u.setRoles(Set.of(adminRole));
+            return userRepository.save(u);
+        });
 
-        staffA = new User();
-        staffA.setTenantId(tenantA.getId());
-        staffA.setEmail("driver@tenant-a.test");
-        staffA.setFullName("Driver A");
-        staffA.setActive(true);
-        staffA.setRoles(Set.of(driverRole));
-        staffA = userRepository.save(staffA);
+        staffA = com.fleetx.shared.context.TenantSecurityContext.executeWithTenant(tenantA.getId(), () -> {
+            User u = new User();
+            u.setTenantId(tenantA.getId());
+            u.setEmail("driver@tenant-a.test");
+            u.setFullName("Driver A");
+            u.setActive(true);
+            u.setRoles(Set.of(driverRole));
+            return userRepository.save(u);
+        });
 
         // Tenant B: 1 Admin, 1 Driver
-        adminB = new User();
-        adminB.setTenantId(tenantB.getId());
-        adminB.setEmail("admin@tenant-b.test");
-        adminB.setFullName("Admin B");
-        adminB.setActive(true);
-        adminB.setRoles(Set.of(adminRole));
-        adminB = userRepository.save(adminB);
+        adminB = com.fleetx.shared.context.TenantSecurityContext.executeWithTenant(tenantB.getId(), () -> {
+            User u = new User();
+            u.setTenantId(tenantB.getId());
+            u.setEmail("admin@tenant-b.test");
+            u.setFullName("Admin B");
+            u.setActive(true);
+            u.setRoles(Set.of(adminRole));
+            return userRepository.save(u);
+        });
 
-        staffB = new User();
-        staffB.setTenantId(tenantB.getId());
-        staffB.setEmail("driver@tenant-b.test");
-        staffB.setFullName("Driver B");
-        staffB.setActive(true);
-        staffB.setRoles(Set.of(driverRole));
-        staffB = userRepository.save(staffB);
+        staffB = com.fleetx.shared.context.TenantSecurityContext.executeWithTenant(tenantB.getId(), () -> {
+            User u = new User();
+            u.setTenantId(tenantB.getId());
+            u.setEmail("driver@tenant-b.test");
+            u.setFullName("Driver B");
+            u.setActive(true);
+            u.setRoles(Set.of(driverRole));
+            return userRepository.save(u);
+        });
     }
 
     private MockHttpSession createSession(User user, Tenant tenant) {

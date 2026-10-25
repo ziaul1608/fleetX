@@ -50,7 +50,7 @@ public class VehicleService implements VehicleLookupService {
     public VehicleResponseDto createVehicle(VehicleCreateRequest request) {
         String normalizedVin = request.getVin().trim().toUpperCase();
         String normalizedPlate = request.getLicensePlate().trim().toUpperCase();
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
 
         if (vehicleRepository.existsByVinAndTenantId(normalizedVin, tenantId)) {
             throw new ResourceConflictException("A vehicle with VIN '" + normalizedVin + "' already exists.");
@@ -87,7 +87,7 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional(readOnly = true)
     public Page<VehicleResponseDto> findVehicles(String status, String type, Boolean active, String search, Pageable pageable) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         String statusFilter = (status != null && !status.isBlank()) ? status.trim() : null;
         String typeFilter = (type != null && !type.isBlank()) ? type.trim() : null;
         String searchFilter = (search != null && !search.isBlank()) ? search.trim() : null;
@@ -98,7 +98,7 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional(readOnly = true)
     public List<VehicleResponseDto> findAllVehiclesList() {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         return vehicleRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -106,7 +106,7 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional(readOnly = true)
     public VehicleResponseDto getVehicleById(Long id) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Vehicle vehicle = vehicleRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
         return mapToDto(vehicle);
@@ -114,7 +114,7 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional
     public VehicleResponseDto updateVehicle(Long id, VehicleUpdateRequest request) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Vehicle vehicle = vehicleRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
@@ -149,7 +149,7 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional
     public VehicleResponseDto updateVehicleStatus(Long id, VehicleStatusUpdateRequest request) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Vehicle vehicle = vehicleRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
@@ -173,7 +173,7 @@ public class VehicleService implements VehicleLookupService {
 
     @Transactional
     public VehicleResponseDto updateOdometer(Long id, Double newOdometerKm) {
-        Long tenantId = TenantSecurityContext.getOptionalTenantId().orElse(1L);
+        Long tenantId = TenantSecurityContext.requireTenantId();
         Vehicle vehicle = vehicleRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 

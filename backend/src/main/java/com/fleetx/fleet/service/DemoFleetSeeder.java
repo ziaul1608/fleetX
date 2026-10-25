@@ -56,67 +56,69 @@ public class DemoFleetSeeder implements ApplicationRunner {
 
     @Transactional
     public void seedDemoFleet() {
-        if (!vehicleRepository.existsByLicensePlate("MH-12-FX-1001")) {
-            VehicleResponseDto v1 = vehicleService.createVehicle(new VehicleCreateRequest(
-                    "1HGCR2F83HA001001",
-                    "MH-12-FX-1001",
-                    "Tata",
-                    "Prima 4028.S",
-                    2025,
-                    "TRUCK",
-                    "DIESEL",
-                    25000.0,
-                    48.0,
-                    12000.0,
-                    "AVAILABLE"
-            ));
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(1L, () -> {
+            if (!vehicleRepository.existsByLicensePlate("MH-12-FX-1001")) {
+                VehicleResponseDto v1 = vehicleService.createVehicle(new VehicleCreateRequest(
+                        "1HGCR2F83HA001001",
+                        "MH-12-FX-1001",
+                        "Tata",
+                        "Prima 4028.S",
+                        2025,
+                        "TRUCK",
+                        "DIESEL",
+                        25000.0,
+                        48.0,
+                        12000.0,
+                        "AVAILABLE"
+                ));
 
-            fuelService.recordFueling(v1.id(), new FuelRecordCreateRequest(
-                    120.0,
-                    new BigDecimal("92.50"),
-                    null,
-                    12420.0,
-                    "HP Highway Plaza, Khalapur",
-                    Instant.now().minus(3, ChronoUnit.DAYS)
-            ));
+                fuelService.recordFueling(v1.id(), new FuelRecordCreateRequest(
+                        120.0,
+                        new BigDecimal("92.50"),
+                        null,
+                        12420.0,
+                        "HP Highway Plaza, Khalapur",
+                        Instant.now().minus(3, ChronoUnit.DAYS)
+                ));
 
-            fuelService.recordFueling(v1.id(), new FuelRecordCreateRequest(
-                    110.0,
-                    new BigDecimal("92.50"),
-                    null,
-                    12860.0,
-                    "IndianOil Expressway Hub, Talegaon",
-                    Instant.now().minus(1, ChronoUnit.DAYS)
-            ));
+                fuelService.recordFueling(v1.id(), new FuelRecordCreateRequest(
+                        110.0,
+                        new BigDecimal("92.50"),
+                        null,
+                        12860.0,
+                        "IndianOil Expressway Hub, Talegaon",
+                        Instant.now().minus(1, ChronoUnit.DAYS)
+                ));
 
-            maintenanceService.recordMaintenance(v1.id(), new MaintenanceRecordCreateRequest(
-                    "PREVENTIVE",
-                    "Scheduled 15,000 km multi-axle brake & oil inspection",
-                    new BigDecimal("14500.00"),
-                    LocalDate.now().minusDays(15),
-                    12100.0,
-                    13100.0,
-                    LocalDate.now().plusDays(45),
-                    "COMPLETED"
-            ));
-        }
+                maintenanceService.recordMaintenance(v1.id(), new MaintenanceRecordCreateRequest(
+                        "PREVENTIVE",
+                        "Scheduled 15,000 km multi-axle brake & oil inspection",
+                        new BigDecimal("14500.00"),
+                        LocalDate.now().minusDays(15),
+                        12100.0,
+                        13100.0,
+                        LocalDate.now().plusDays(45),
+                        "COMPLETED"
+                ));
+            }
 
-        if (!vehicleRepository.existsByLicensePlate("MH-14-FX-2002")) {
-            vehicleService.createVehicle(new VehicleCreateRequest(
-                    "1HGCR2F83HA002002",
-                    "MH-14-FX-2002",
-                    "Ashok Leyland",
-                    "Ecomet 1615 HE",
-                    2024,
-                    "TRUCK",
-                    "DIESEL",
-                    16000.0,
-                    32.0,
-                    8500.0,
-                    "AVAILABLE"
-            ));
-        }
+            if (!vehicleRepository.existsByLicensePlate("MH-14-FX-2002")) {
+                vehicleService.createVehicle(new VehicleCreateRequest(
+                        "1HGCR2F83HA002002",
+                        "MH-14-FX-2002",
+                        "Ashok Leyland",
+                        "Ecomet 1615 HE",
+                        2024,
+                        "TRUCK",
+                        "DIESEL",
+                        16000.0,
+                        32.0,
+                        8500.0,
+                        "AVAILABLE"
+                ));
+            }
 
-        log.info("[DemoFleetSeeder] Repeatable development fleet assets, fuel logs, and maintenance verified.");
+            log.info("[DemoFleetSeeder] Repeatable development fleet assets, fuel logs, and maintenance verified.");
+        });
     }
 }

@@ -15,10 +15,10 @@ public record UserResponseDto(
         String warehouseName
 ) {
     public UserResponseDto(Long userId, String email, String fullName, List<String> roles) {
-        this(userId, email, fullName, roles, true, Instant.now(), 1L, "FleetX Global Logistics", "Central Warehouse");
+        this(userId, email, fullName, roles, true, Instant.now(), null, null, null);
     }
 
     public UserResponseDto(Long userId, String email, String fullName, List<String> roles, boolean active, Instant createdAt) {
-        this(userId, email, fullName, roles, active, createdAt, 1L, "FleetX Global Logistics", "Central Warehouse");
+        this(userId, email, fullName, roles, active, createdAt, null, null, null);
     }
 }

@@ -11,7 +11,7 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, updatable = false)
     private Long tenantId;
 
     @Column(name = "user_id")
@@ -42,17 +42,20 @@ public class AuditLog {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
-        if (tenantId == null) {
-            tenantId = com.fleetx.shared.context.TenantSecurityContext.getOptionalTenantId().orElse(1L);
-        }
+        this.tenantId = com.fleetx.shared.context.TenantSecurityContext.validateAndAssignTenantForPersist(this.tenantId, "AuditLog");
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        com.fleetx.shared.context.TenantSecurityContext.validateTenantForUpdate(this.tenantId, "AuditLog");
     }
 
     public AuditLog(Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
-        this(1L, userId, action, entityType, entityId, ipAddress, detailsJson);
+        this(null, userId, action, entityType, entityId, ipAddress, detailsJson);
     }
 
     public AuditLog(Long tenantId, Long userId, String action, String entityType, Long entityId, String ipAddress, String detailsJson) {
-        this.tenantId = tenantId != null ? tenantId : 1L;
+        this.tenantId = tenantId;
         this.userId = userId;
         this.action = action;
         this.entityType = entityType;
