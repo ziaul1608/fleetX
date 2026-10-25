@@ -122,3 +122,11 @@ Every PR must verify:
 - Backend: `mvn clean test` succeeds with zero errors.
 - Frontend: `npm test` and `npm run lint` pass cleanly.
 - No shortcuts, stub bypasses, or disabled security tests.
+
+---
+
+## 7. Continuous GitHub Synchronization Standard
+
+### Rule 7.1: Automatic Commit & Push After Every Logical Update
+Whenever FleetX code is changed, test the relevant change, inspect the diff for secrets, commit the completed logical update and push to `origin/feature/multitenant-email-otp`. Verify the remote commit SHA. Do not wait for the user to request a push. Never force-push, expose secrets or deploy incomplete code to main.
+
