@@ -48,13 +48,31 @@ describe('Phase 11 — Multi-Tenant SaaS, Public Landing Page & Email OTP Authen
         </MemoryRouter>
       );
 
+      // Hero headline & supporting text
+      expect(screen.getByText(/One Control Tower. Your Entire Fleet./i)).toBeInTheDocument();
+      expect(screen.getByText(/Manage vehicles, drivers, trips, shipments and fleet operations from one secure workspace/i)).toBeInTheDocument();
       expect(screen.getByText(/Intelligent Multi-Tenant Fleet & Logistics Operating System/i)).toBeInTheDocument();
       expect(screen.getByText(/Multi-Tenant Architecture & Passwordless Email OTP Access/i)).toBeInTheDocument();
+
+      // Navigation & CTA links
       expect(screen.getByRole('link', { name: /Register Private Warehouse/i })).toHaveAttribute('href', '/signup');
       expect(screen.getByRole('link', { name: /Sign In with Email OTP/i })).toHaveAttribute('href', '/login');
+
+      // 5 Platform Modules
+      expect(screen.getByText(/1. Identity & Admin/i)).toBeInTheDocument();
+      expect(screen.getByText(/2. Fleet & Asset Management/i)).toBeInTheDocument();
+      expect(screen.getByText(/3. Driver & Trip Operations/i)).toBeInTheDocument();
+      expect(screen.getByText(/4. Shipment & Route Management/i)).toBeInTheDocument();
+      expect(screen.getByText(/5. Tracking & Control Tower/i)).toBeInTheDocument();
+
+      // Core Capabilities & 4-Step Onboarding
       expect(screen.getByText(/Private Warehouse Workspaces/i)).toBeInTheDocument();
       expect(screen.getByText(/Passwordless Email OTP Security/i)).toBeInTheDocument();
       expect(screen.getByText(/How to Onboard Your Warehouse/i)).toBeInTheDocument();
+      expect(screen.getByText(/Create Workspace/i)).toBeInTheDocument();
+      expect(screen.getByText(/Add Your Fleet/i)).toBeInTheDocument();
+      expect(screen.getByText(/Dispatch & Track/i)).toBeInTheDocument();
+      expect(screen.getByText(/Optimize & Scale/i)).toBeInTheDocument();
     });
   });
 
@@ -163,6 +181,89 @@ describe('Phase 11 — Multi-Tenant SaaS, Public Landing Page & Email OTP Authen
           email: 'owner@warehouse.test',
           otp: '849201',
         });
+      });
+    });
+
+    it('displays error message when verification code is incorrect', async () => {
+      vi.mocked(authApi.sendSignupOtp).mockResolvedValueOnce({
+        email: 'owner@warehouse.test',
+        purpose: 'SIGNUP',
+        expiresInSeconds: 300,
+        cooldownSeconds: 60,
+        message: 'Verification code sent',
+      });
+      vi.mocked(authApi.verifySignupOtp).mockRejectedValueOnce({
+        errorCode: 'INCORRECT_OTP',
+        message: 'Incorrect verification code. Attempts remaining: 3',
+      });
+
+      render(
+        <AuthProvider>
+          <MemoryRouter>
+            <SignupPage />
+          </MemoryRouter>
+        </AuthProvider>
+      );
+
+      // Submit step 1
+      fireEvent.change(screen.getByLabelText(/Company \/ Organization Name/i), { target: { value: 'Apex Logistics Corp' } });
+      fireEvent.change(screen.getByLabelText(/Warehouse \/ Central Depot Name/i), { target: { value: 'Mumbai West Depot' } });
+      fireEvent.change(screen.getByLabelText(/Owner \/ Manager Full Name/i), { target: { value: 'Warehouse Owner' } });
+      fireEvent.change(screen.getByLabelText(/Work Email Address/i), { target: { value: 'owner@warehouse.test' } });
+      fireEvent.click(screen.getByRole('button', { name: /Send Verification Code/i }));
+
+      // Wait for step 2
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Enter 6-Digit Verification Code/i)).toBeInTheDocument();
+      });
+
+      // Enter wrong code
+      fireEvent.change(screen.getByLabelText(/Enter 6-Digit Verification Code/i), { target: { value: '000000' } });
+      fireEvent.click(screen.getByRole('button', { name: /Verify & Launch Warehouse/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Incorrect verification code. Attempts remaining: 3/i)).toBeInTheDocument();
+      });
+    });
+
+    it('displays contextual error when OTP expires during verification', async () => {
+      vi.mocked(authApi.sendSignupOtp).mockResolvedValueOnce({
+        email: 'owner@warehouse.test',
+        purpose: 'SIGNUP',
+        expiresInSeconds: 300,
+        cooldownSeconds: 60,
+        message: 'Verification code sent',
+      });
+      vi.mocked(authApi.verifySignupOtp).mockRejectedValueOnce({
+        errorCode: 'OTP_EXPIRED',
+        message: 'Verification code has expired. Please request a new code.',
+      });
+
+      render(
+        <AuthProvider>
+          <MemoryRouter>
+            <SignupPage />
+          </MemoryRouter>
+        </AuthProvider>
+      );
+
+      // Submit step 1
+      fireEvent.change(screen.getByLabelText(/Company \/ Organization Name/i), { target: { value: 'Apex Logistics Corp' } });
+      fireEvent.change(screen.getByLabelText(/Warehouse \/ Central Depot Name/i), { target: { value: 'Mumbai West Depot' } });
+      fireEvent.change(screen.getByLabelText(/Owner \/ Manager Full Name/i), { target: { value: 'Warehouse Owner' } });
+      fireEvent.change(screen.getByLabelText(/Work Email Address/i), { target: { value: 'owner@warehouse.test' } });
+      fireEvent.click(screen.getByRole('button', { name: /Send Verification Code/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Enter 6-Digit Verification Code/i)).toBeInTheDocument();
+      });
+
+      // Enter expired code
+      fireEvent.change(screen.getByLabelText(/Enter 6-Digit Verification Code/i), { target: { value: '111111' } });
+      fireEvent.click(screen.getByRole('button', { name: /Verify & Launch Warehouse/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Verification code has expired. Please request a new code below./i)).toBeInTheDocument();
       });
     });
   });

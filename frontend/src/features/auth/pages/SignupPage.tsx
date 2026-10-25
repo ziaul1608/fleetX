@@ -81,8 +81,14 @@ export const SignupPage: React.FC = () => {
       setStep('VERIFY_OTP');
     } catch (err: unknown) {
       const apiErr = err as { status?: number; errorCode?: string; message?: string };
-      if (apiErr.errorCode === 'EMAIL_ALREADY_EXISTS') {
-        setError('An account with this email already exists. Please log in.');
+      if (apiErr.errorCode === 'EMAIL_ALREADY_EXISTS' || apiErr.errorCode === 'RESOURCE_CONFLICT' || apiErr.errorCode === 'DATA_CONFLICT') {
+        setError('An account with this email address already exists. Please sign in.');
+      } else if (apiErr.errorCode === 'OTP_COOLDOWN') {
+        setError(apiErr.message || 'Please wait before requesting another verification code.');
+      } else if (apiErr.errorCode === 'EMAIL_SERVICE_UNAVAILABLE') {
+        setError('Email delivery service is temporarily unavailable. Please try again shortly.');
+      } else if (apiErr.errorCode === 'NETWORK_ERROR') {
+        setError('Unable to reach the server. Please check your network connection.');
       } else {
         setError(apiErr.message || 'Failed to dispatch verification code. Please check your email.');
       }
@@ -106,6 +112,7 @@ export const SignupPage: React.FC = () => {
       });
       setSuccessMsg(res.message || `New code sent to ${email.trim()}`);
       setCooldown(res.cooldownSeconds || 60);
+      setOtp('');
     } catch (err: unknown) {
       const apiErr = err as { message?: string };
       setError(apiErr.message || 'Failed to resend code. Please wait for cooldown.');
@@ -150,11 +157,23 @@ export const SignupPage: React.FC = () => {
       if (apiErr.errorCode === 'INCORRECT_OTP') {
         setError(apiErr.message || 'Incorrect verification code. Please try again.');
       } else if (apiErr.errorCode === 'OTP_EXPIRED') {
-        setError('Verification code has expired. Please request a new code.');
+        setError('Verification code has expired. Please request a new code below.');
       } else if (apiErr.errorCode === 'MAX_ATTEMPTS_EXCEEDED') {
         setError('Maximum verification attempts exceeded. Please request a new code.');
+      } else if (apiErr.errorCode === 'NO_ACTIVE_OTP') {
+        setError('No active verification code found for this email. Please request a new code.');
+      } else if (apiErr.errorCode === 'OTP_ALREADY_USED') {
+        setError('This verification code has already been consumed. Please request a fresh code.');
+      } else if (apiErr.errorCode === 'EMAIL_ALREADY_EXISTS' || apiErr.errorCode === 'RESOURCE_CONFLICT' || apiErr.errorCode === 'DATA_CONFLICT') {
+        setError('An account with this email address already exists. Please sign in instead.');
+      } else if (apiErr.errorCode === 'EMAIL_SERVICE_UNAVAILABLE') {
+        setError('Email service is temporarily unavailable. Please try again shortly.');
+      } else if (apiErr.errorCode === 'TENANT_INACTIVE') {
+        setError('Organization account is suspended. Please contact system support.');
+      } else if (apiErr.errorCode === 'NETWORK_ERROR') {
+        setError('Unable to reach the server. Please check your network connection and try again.');
       } else {
-        setError(apiErr.message || 'Verification failed. Please try again.');
+        setError(apiErr.message || 'Verification failed. Please check your code or request a new code.');
       }
     } finally {
       setLoading(false);

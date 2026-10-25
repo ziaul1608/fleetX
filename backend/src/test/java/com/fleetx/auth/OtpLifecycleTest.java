@@ -265,4 +265,51 @@ public class OtpLifecycleTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.companyName").value("Login Test Co"));
     }
+
+    @Test
+    @DisplayName("Should reject signup verification if email already exists with 409 CONFLICT")
+    void testVerifySignupOtp_EmailAlreadyExists_ReturnsConflict() throws Exception {
+        // Pre-create user with same email
+        Tenant t = tenantRepository.save(new Tenant("TNT-DUP", "Dup Corp", "Dup Warehouse"));
+        User existingUser = new User();
+        existingUser.setTenantId(t.getId());
+        existingUser.setEmail("duplicate@warehouse.test");
+        existingUser.setFullName("Existing User");
+        existingUser.setActive(true);
+        com.fleetx.shared.context.TenantSecurityContext.runWithTenant(t.getId(), () -> {
+            userRepository.save(existingUser);
+        });
+
+        VerifySignupOtpRequest verifyReq = new VerifySignupOtpRequest(
+                "duplicate@warehouse.test",
+                "123456",
+                "New Corp",
+                "New Warehouse",
+                "New Owner"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/otp/verify-signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(verifyReq)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("EMAIL_ALREADY_EXISTS"));
+    }
+
+    @Test
+    @DisplayName("Should reject signup verification with invalid OTP format")
+    void testVerifySignupOtp_InvalidFormat_ReturnsBadRequest() throws Exception {
+        VerifySignupOtpRequest verifyReq = new VerifySignupOtpRequest(
+                "invalidformat@warehouse.test",
+                "12ab56", // non-numeric
+                "New Corp",
+                "New Warehouse",
+                "New Owner"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/otp/verify-signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(verifyReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"));
+    }
 }
