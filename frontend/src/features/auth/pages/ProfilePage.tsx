@@ -137,7 +137,7 @@ export const ProfilePage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="User Account &amp; Profile"
+        title="User Account & Profile"
         subtitle="Manage your identity credentials, assigned role authorities, and active session details."
       >
         <button
@@ -152,42 +152,49 @@ export const ProfilePage: React.FC = () => {
       <div className="row g-4">
         {/* Profile & Security Management */}
         <div className="col-12 col-lg-7 d-flex flex-column gap-4">
-          <div className="fx-card">
-            <div className="d-flex align-items-center gap-3 pb-3 border-bottom mb-4">
+          <div className="fx-glass-panel p-4 rounded-3 border" style={{ borderColor: 'rgba(232, 211, 162, 0.22)' }}>
+            <div className="d-flex align-items-center gap-3 pb-3 border-bottom mb-4" style={{ borderColor: 'rgba(232, 211, 162, 0.16)' }}>
               <div
-                className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                style={{ width: '56px', height: '56px', fontSize: '1.4rem', fontWeight: 600 }}
+                className="rounded-circle d-flex align-items-center justify-content-center shadow"
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  fontSize: '1.4rem',
+                  fontWeight: 700,
+                  background: 'linear-gradient(135deg, #E8D3A2 0%, #CFB778 100%)',
+                  color: '#201713',
+                }}
               >
                 {user.fullName.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h3 className="h5 fw-bold text-slate-900 mb-1">{user.fullName}</h3>
-                <span className="text-muted small">{user.email}</span>
+                <h3 className="h5 fw-bold mb-1" style={{ color: 'var(--fx-ivory-text)' }}>{user.fullName}</h3>
+                <span className="small" style={{ color: 'var(--fx-muted-sand)' }}>{user.email}</span>
               </div>
             </div>
 
             <div className="row g-3">
               <div className="col-sm-6">
-                <label className="text-muted small d-block mb-1">User Identifier</label>
-                <div className="fw-semibold text-slate-800">
+                <label className="small d-block mb-1" style={{ color: 'var(--fx-muted-sand)' }}>User Identifier</label>
+                <div className="fw-semibold font-monospace" style={{ color: 'var(--fx-champagne-gold)' }}>
                   <code>#{user.userId}</code>
                 </div>
               </div>
 
               <div className="col-sm-6">
-                <label className="text-muted small d-block mb-1">Account State</label>
+                <label className="small d-block mb-1" style={{ color: 'var(--fx-muted-sand)' }}>Account State</label>
                 <div className="d-flex align-items-center gap-2">
                   {user.active ? (
                     <>
-                      <CheckCircle2 size={16} className="text-success" />
-                      <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                      <CheckCircle2 size={16} style={{ color: '#8CE3A7' }} />
+                      <span className="badge fx-badge-success px-2 py-1">
                         Active &amp; Verified
                       </span>
                     </>
                   ) : (
                     <>
-                      <XCircle size={16} className="text-danger" />
-                      <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                      <XCircle size={16} style={{ color: '#FFA4AC' }} />
+                      <span className="badge fx-badge-danger px-2 py-1">
                         Deactivated
                       </span>
                     </>
@@ -196,14 +203,14 @@ export const ProfilePage: React.FC = () => {
               </div>
 
               <div className="col-12">
-                <label className="text-muted small d-block mb-2">Assigned RBAC Authorities</label>
+                <label className="small d-block mb-2" style={{ color: 'var(--fx-muted-sand)' }}>Assigned RBAC Authorities</label>
                 <div className="d-flex flex-wrap gap-2">
                   {user.roles.map((role) => (
                     <span
                       key={role}
-                      className="badge bg-light text-primary border border-primary-subtle px-3 py-2 fw-medium"
+                      className="badge fx-badge-gold px-3 py-1.5 fw-medium d-inline-flex align-items-center gap-1"
                     >
-                      <Shield size={14} className="me-1 inline" /> {role}
+                      <Shield size={13} /> {role}
                     </span>
                   ))}
                 </div>
@@ -211,9 +218,9 @@ export const ProfilePage: React.FC = () => {
 
               {user.createdAt && (
                 <div className="col-12">
-                  <label className="text-muted small d-block mb-1">Account Provisioned</label>
-                  <div className="d-flex align-items-center gap-2 text-secondary small">
-                    <Calendar size={14} />
+                  <label className="small d-block mb-1" style={{ color: 'var(--fx-muted-sand)' }}>Account Provisioned</label>
+                  <div className="d-flex align-items-center gap-2 small" style={{ color: 'var(--fx-muted-sand)' }}>
+                    <Calendar size={14} style={{ color: 'var(--fx-soft-gold)' }} />
                     <span>{new Date(user.createdAt).toLocaleString()}</span>
                   </div>
                 </div>
@@ -221,8 +228,8 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             {isAdmin && (
-              <div className="mt-4 pt-3 border-top">
-                <Link to="/admin/users" className="btn btn-sm btn-outline-primary">
+              <div className="mt-4 pt-3 border-top" style={{ borderColor: 'rgba(232, 211, 162, 0.16)' }}>
+                <Link to="/admin/users" className="btn btn-sm fx-btn-gold">
                   Go to Administrative User Console &rarr;
                 </Link>
               </div>
@@ -230,11 +237,11 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           {/* Password Change Card */}
-          <div className="fx-card">
-            <h4 className="fs-6 fw-bold text-slate-900 mb-1 d-flex align-items-center gap-2">
-              <Lock size={18} className="text-primary" /> Update Password
+          <div className="fx-glass-panel p-4 rounded-3 border" style={{ borderColor: 'rgba(232, 211, 162, 0.22)' }}>
+            <h4 className="fs-6 fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: 'var(--fx-ivory-text)' }}>
+              <Lock size={18} style={{ color: 'var(--fx-champagne-gold)' }} /> Update Password
             </h4>
-            <p className="text-muted small mb-3">
+            <p className="small mb-3" style={{ color: 'var(--fx-muted-sand)' }}>
               Self-service password update. Enter your current password and choose a secure replacement (minimum 8 characters).
             </p>
 
@@ -254,11 +261,18 @@ export const ProfilePage: React.FC = () => {
 
             <form onSubmit={handlePasswordSubmit}>
               <div className="mb-3">
-                <label className="form-label small fw-medium text-secondary" htmlFor="profile-current-password">
+                <label className="form-label small fw-medium d-block mb-1" htmlFor="profile-current-password" style={{ color: 'var(--fx-ivory-text)' }}>
                   Current Password <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light text-muted">
+                  <span
+                    className="input-group-text border-end-0"
+                    style={{
+                      background: 'rgba(32, 23, 19, 0.65)',
+                      borderColor: 'rgba(232, 211, 162, 0.22)',
+                      color: 'var(--fx-muted-sand)',
+                    }}
+                  >
                     <Lock size={14} />
                   </span>
                   <input
@@ -276,11 +290,18 @@ export const ProfilePage: React.FC = () => {
 
               <div className="row g-2 mb-3">
                 <div className="col-12 col-sm-6">
-                  <label className="form-label small fw-medium text-secondary" htmlFor="profile-new-password">
+                  <label className="form-label small fw-medium d-block mb-1" htmlFor="profile-new-password" style={{ color: 'var(--fx-ivory-text)' }}>
                     New Password <span className="text-danger">*</span>
                   </label>
                   <div className="input-group input-group-sm">
-                    <span className="input-group-text bg-light text-muted">
+                    <span
+                      className="input-group-text border-end-0"
+                      style={{
+                        background: 'rgba(32, 23, 19, 0.65)',
+                        borderColor: 'rgba(232, 211, 162, 0.22)',
+                        color: 'var(--fx-muted-sand)',
+                      }}
+                    >
                       <Lock size={14} />
                     </span>
                     <input
@@ -297,11 +318,18 @@ export const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="col-12 col-sm-6">
-                  <label className="form-label small fw-medium text-secondary" htmlFor="profile-confirm-password">
+                  <label className="form-label small fw-medium d-block mb-1" htmlFor="profile-confirm-password" style={{ color: 'var(--fx-ivory-text)' }}>
                     Confirm New Password <span className="text-danger">*</span>
                   </label>
                   <div className="input-group input-group-sm">
-                    <span className="input-group-text bg-light text-muted">
+                    <span
+                      className="input-group-text border-end-0"
+                      style={{
+                        background: 'rgba(32, 23, 19, 0.65)',
+                        borderColor: 'rgba(232, 211, 162, 0.22)',
+                        color: 'var(--fx-muted-sand)',
+                      }}
+                    >
                       <Lock size={14} />
                     </span>
                     <input
@@ -320,7 +348,7 @@ export const ProfilePage: React.FC = () => {
 
               <button
                 type="submit"
-                className="btn btn-primary btn-sm px-3 d-inline-flex align-items-center gap-2"
+                className="btn fx-btn-gold btn-sm px-3 d-inline-flex align-items-center gap-2 shadow"
                 disabled={pwdLoading}
               >
                 {pwdLoading ? (
@@ -338,33 +366,33 @@ export const ProfilePage: React.FC = () => {
 
         {/* Security & Session Info */}
         <div className="col-12 col-lg-5">
-          <div className="fx-card h-100">
-            <h4 className="fs-6 fw-bold text-slate-900 mb-3 d-flex align-items-center gap-2">
-              <Key size={18} className="text-primary" /> Security &amp; Session Guarantees
+          <div className="fx-glass-panel p-4 rounded-3 border h-100" style={{ borderColor: 'rgba(232, 211, 162, 0.22)' }}>
+            <h4 className="fs-6 fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: 'var(--fx-ivory-text)' }}>
+              <Key size={18} style={{ color: 'var(--fx-champagne-gold)' }} /> Security &amp; Session Guarantees
             </h4>
-            <ul className="list-unstyled small text-muted d-flex flex-col gap-3 mb-0">
+            <ul className="list-unstyled small d-flex flex-column gap-3 mb-0" style={{ color: 'var(--fx-muted-sand)' }}>
               <li className="d-flex align-items-start gap-2">
-                <Shield size={16} className="text-success flex-shrink-0 mt-1" />
+                <Shield size={16} style={{ color: '#8CE3A7' }} className="flex-shrink-0 mt-1" />
                 <div>
-                  <strong className="text-slate-800">Server-Side Session:</strong> Authentication is maintained via Spring Security HTTP session cookies (<code>JSESSIONID</code>) with <code>HttpOnly</code> and <code>SameSite</code> protection.
+                  <strong style={{ color: 'var(--fx-ivory-text)' }}>Server-Side Session:</strong> Authentication is maintained via Spring Security HTTP session cookies (<code>JSESSIONID</code>) with <code>HttpOnly</code> and <code>SameSite</code> protection.
                 </div>
               </li>
               <li className="d-flex align-items-start gap-2">
-                <Shield size={16} className="text-success flex-shrink-0 mt-1" />
+                <Shield size={16} style={{ color: '#8CE3A7' }} className="flex-shrink-0 mt-1" />
                 <div>
-                  <strong className="text-slate-800">CSRF Token Validation:</strong> Mutating POST/PUT/PATCH/DELETE calls strictly require synchronized CSRF token headers.
+                  <strong style={{ color: 'var(--fx-ivory-text)' }}>CSRF Token Validation:</strong> Mutating POST/PUT/PATCH/DELETE calls strictly require synchronized CSRF token headers.
                 </div>
               </li>
               <li className="d-flex align-items-start gap-2">
-                <Shield size={16} className="text-success flex-shrink-0 mt-1" />
+                <Shield size={16} style={{ color: '#8CE3A7' }} className="flex-shrink-0 mt-1" />
                 <div>
-                  <strong className="text-slate-800">BCrypt Password Protection:</strong> Account credentials are encrypted with salted BCrypt hashing.
+                  <strong style={{ color: 'var(--fx-ivory-text)' }}>BCrypt Password Protection:</strong> Account credentials are encrypted with salted BCrypt hashing.
                 </div>
               </li>
               <li className="d-flex align-items-start gap-2">
-                <Shield size={16} className="text-success flex-shrink-0 mt-1" />
+                <Shield size={16} style={{ color: '#8CE3A7' }} className="flex-shrink-0 mt-1" />
                 <div>
-                  <strong className="text-slate-800">Immutable Audit Trail:</strong> All administrative adjustments, logins, and status toggles are recorded with IP addresses and timestamps.
+                  <strong style={{ color: 'var(--fx-ivory-text)' }}>Immutable Audit Trail:</strong> All administrative adjustments, logins, and status toggles are recorded with IP addresses and timestamps.
                 </div>
               </li>
             </ul>
