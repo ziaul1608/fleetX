@@ -53,6 +53,13 @@ public class OtpService {
     @Value("${fleetx.auth.otp.hmac-secret:fleetx-default-dev-hmac-secret-key-change-in-prod-32bytes}")
     private String hmacSecret;
 
+    @jakarta.annotation.PostConstruct
+    public void validateHmacSecret() {
+        if (hmacSecret == null || hmacSecret.trim().length() < 16) {
+            throw new IllegalStateException("FLEETX_OTP_HMAC_SECRET must be configured with a secure key of at least 16 characters.");
+        }
+    }
+
     public OtpService(OtpChallengeRepository otpChallengeRepository, EmailService emailService, ObjectMapper objectMapper) {
         this.otpChallengeRepository = otpChallengeRepository;
         this.emailService = emailService;

@@ -135,6 +135,25 @@ public class OtpSecurityHardeningTest {
     }
 
     @Test
+    @DisplayName("Mandatory and stable HMAC secret: validateHmacSecret rejects null, blank or short secret keys")
+    void testMandatoryHmacSecretValidation() {
+        String originalSecret = (String) ReflectionTestUtils.getField(otpService, "hmacSecret");
+        try {
+            ReflectionTestUtils.setField(otpService, "hmacSecret", "");
+            assertThatThrownBy(() -> otpService.validateHmacSecret())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("FLEETX_OTP_HMAC_SECRET must be configured");
+
+            ReflectionTestUtils.setField(otpService, "hmacSecret", "short-key");
+            assertThatThrownBy(() -> otpService.validateHmacSecret())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("at least 16 characters");
+        } finally {
+            ReflectionTestUtils.setField(otpService, "hmacSecret", originalSecret);
+        }
+    }
+
+    @Test
     @DisplayName("Email enumeration defense: send-login returns uniform 200 response for non-existent email without dispatching OTP")
     void testEmailEnumerationDefenseForNonExistentEmail() throws Exception {
         SendLoginOtpRequest request = new SendLoginOtpRequest("nonexistent.random.user99@unknown.test");
