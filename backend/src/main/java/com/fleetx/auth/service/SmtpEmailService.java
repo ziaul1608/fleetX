@@ -12,7 +12,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
-@Profile("!test")
+@Profile("smtp")
 public class SmtpEmailService implements EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(SmtpEmailService.class);

@@ -49,14 +49,9 @@ services:
       - key: BOOTSTRAP_ADMIN_PASSWORD_OVERRIDE
         sync: false
 
-      # Optional SMTP Email Configuration (Passwordless OTP Delivery)
-      - key: SPRING_MAIL_HOST
-        sync: false
-      - key: SPRING_MAIL_PORT
-        sync: false
-      - key: SPRING_MAIL_USERNAME
-        sync: false
-      - key: SPRING_MAIL_PASSWORD
+      # Production HTTPS Transactional Email Delivery (Resend REST API)
+      # Bypasses Render outbound SMTP port blocking (ports 25, 465, 587)
+      - key: RESEND_API_KEY
         sync: false
       - key: FLEETX_MAIL_FROM
         sync: false
