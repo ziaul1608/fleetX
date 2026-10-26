@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { Layout } from './Layout';
 import { ProtectedRoute } from '../shared/components/ProtectedRoute';
 import { authRoutes } from '../features/auth/routes';
@@ -7,30 +7,12 @@ import { driverRoutes } from '../features/drivers/routes';
 import { shipmentRoutes } from '../features/shipments/routes';
 import { trackingRoutes } from '../features/tracking/routes';
 import { LandingPage } from '../features/landing/pages/LandingPage';
-import { useAuth } from '../shared/context/AuthContext';
-import { LoadingState } from '../shared/components/LoadingState';
-
-/**
- * Root Router Component:
- * - Unauthenticated users visiting '/' see the public marketing LandingPage.
- * - Authenticated users visiting '/' are redirected to '/dashboard' (Control Tower).
- */
-const RootHandler: React.FC = () => {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading) {
-    return <LoadingState message="Connecting to FleetX..." />;
-  }
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return <LandingPage />;
-};
 
 export const router = createBrowserRouter([
-  // Public Landing Page
+  // Public FleetX Cover Page: default entry point for everyone visiting '/'
   {
     path: '/',
-    element: <RootHandler />,
+    element: <LandingPage />,
   },
 
   // Standalone public routes (login and signup)

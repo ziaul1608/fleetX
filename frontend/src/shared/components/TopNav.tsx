@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Search, UserCircle, LogOut } from 'lucide-react';
+import { Bell, Search, UserCircle, LogOut, Users, Globe, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,13 +11,22 @@ export const TopNav: React.FC<TopNavProps> = () => {
   const navigate = useNavigate();
   const { currentUser, logout, loading } = useAuth();
 
-  const handleLogout = async () => {
+  const handleChangeAccount = async () => {
     try {
       await logout();
     } catch {
       // Proceed to login screen even if session was already invalidated
     }
     navigate('/login');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // Proceed to cover page even if session was already invalidated
+    }
+    navigate('/');
   };
 
   const isAdmin = currentUser?.roles.includes('ADMIN') ?? false;
@@ -125,23 +134,61 @@ export const TopNav: React.FC<TopNavProps> = () => {
               </small>
             </div>
           </button>
-          <ul className="dropdown-menu dropdown-menu-end shadow-lg">
+          <ul className="dropdown-menu dropdown-menu-end shadow-lg" style={{ minWidth: '240px' }}>
+            <li className="px-3 py-2 border-bottom" style={{ borderColor: 'rgba(232, 211, 162, 0.16)' }}>
+              <div className="fw-bold small" style={{ color: 'var(--fx-ivory-text)' }}>
+                {currentUser?.fullName || 'Guest User'}
+              </div>
+              <div className="text-truncate small" style={{ color: 'var(--fx-muted-sand)', fontSize: '0.75rem' }}>
+                {currentUser?.email}
+              </div>
+              <div className="badge fx-badge-gold mt-1" style={{ fontSize: '0.65rem' }}>
+                Tenant #{currentUser?.tenantId ?? 1} &bull; {currentUser?.companyName || 'Warehouse'}
+              </div>
+            </li>
             <li>
-              <Link className="dropdown-item small" to="/profile">
-                Session &amp; Profile
+              <Link className="dropdown-item small d-flex align-items-center gap-2 py-2" to="/">
+                <Globe size={15} style={{ color: 'var(--fx-champagne-gold)' }} />
+                <span>Public Cover Page</span>
+              </Link>
+            </li>
+            <li>
+              <Link className="dropdown-item small d-flex align-items-center gap-2 py-2" to="/profile">
+                <UserCircle size={15} style={{ color: 'var(--fx-champagne-gold)' }} />
+                <span>Session &amp; Profile</span>
               </Link>
             </li>
             {isAdmin && (
               <li>
-                <Link className="dropdown-item small" to="/admin/users">
-                  Account Settings
+                <Link className="dropdown-item small d-flex align-items-center gap-2 py-2" to="/admin/users">
+                  <Shield size={15} style={{ color: 'var(--fx-champagne-gold)' }} />
+                  <span>Account Settings &amp; Roles</span>
                 </Link>
               </li>
             )}
-            <li><hr className="dropdown-divider" /></li>
+            <li><hr className="dropdown-divider my-1" style={{ borderColor: 'rgba(232, 211, 162, 0.16)' }} /></li>
             <li>
-              <button className="dropdown-item small d-flex align-items-center gap-2" style={{ color: '#FFA4AC' }} onClick={handleLogout}>
-                <LogOut size={14} /> Log out
+              <button
+                className="dropdown-item small d-flex align-items-center gap-2 py-2"
+                style={{ color: 'var(--fx-champagne-gold)' }}
+                onClick={handleChangeAccount}
+                type="button"
+                aria-label="Change Account"
+              >
+                <Users size={15} />
+                <span>Change Account</span>
+              </button>
+            </li>
+            <li>
+              <button
+                className="dropdown-item small d-flex align-items-center gap-2 py-2"
+                style={{ color: '#FFA4AC' }}
+                onClick={handleLogout}
+                type="button"
+                aria-label="Log out"
+              >
+                <LogOut size={15} />
+                <span>Log out</span>
               </button>
             </li>
           </ul>

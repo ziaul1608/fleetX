@@ -71,7 +71,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Public Health Check & Auth Bootstrap
-                        .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+                        .requestMatchers("/api/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/auth/login").permitAll()
                         .requestMatchers("/api/v1/auth/otp/**", "/api/auth/otp/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf", "/api/auth/csrf").permitAll()

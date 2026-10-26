@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Truck,
@@ -13,6 +13,8 @@ import {
   Wrench,
   Navigation,
   MapPin,
+  LogOut,
+  Globe,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,7 +24,8 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
-  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
   const roles = currentUser?.roles ?? [];
 
   const isAdmin = roles.includes('ADMIN');
@@ -149,6 +152,45 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             <span className="label">Identity &amp; Roles</span>
           </NavLink>
         )}
+
+        <div className="px-3 pt-3 pb-1 text-uppercase fw-bold" style={{ fontSize: '0.65rem', color: 'var(--fx-muted-sand)', letterSpacing: '0.05em' }}>
+          {!collapsed && 'Session & Portal'}
+        </div>
+
+        <NavLink to="/" className={({ isActive }) => `fx-nav-item ${isActive ? 'active' : ''}`}>
+          <Globe size={18} className="icon" />
+          <span className="label">Cover Page</span>
+        </NavLink>
+
+        <button
+          onClick={async () => {
+            try { await logout(); } catch {}
+            navigate('/login');
+          }}
+          className="fx-nav-item w-100 text-start border-0 bg-transparent"
+          style={{ cursor: 'pointer', color: 'var(--fx-champagne-gold)' }}
+          title="Change Account"
+          aria-label="Change Account"
+          type="button"
+        >
+          <Users size={18} className="icon" />
+          {!collapsed && <span className="label">Change Account</span>}
+        </button>
+
+        <button
+          onClick={async () => {
+            try { await logout(); } catch {}
+            navigate('/');
+          }}
+          className="fx-nav-item w-100 text-start border-0 bg-transparent text-danger-emphasis"
+          style={{ cursor: 'pointer' }}
+          title="Log Out"
+          aria-label="Log Out"
+          type="button"
+        >
+          <LogOut size={18} className="icon" />
+          {!collapsed && <span className="label">Log Out</span>}
+        </button>
       </div>
 
       {/* Footer Info */}

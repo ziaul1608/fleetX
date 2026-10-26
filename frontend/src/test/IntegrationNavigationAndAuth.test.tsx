@@ -108,7 +108,7 @@ describe('Phase 7 — Frontend Route Registration, Auth Header & Logout Integrat
       currentUser: mockAdminUser,
     });
 
-    expect(screen.getByText('System Administrator')).toBeInTheDocument();
+    expect(screen.getAllByText('System Administrator')[0]).toBeInTheDocument();
     expect(screen.getByText('ADMIN')).toBeInTheDocument();
     expect(screen.queryByText('Admin User / ROLE_ADMIN')).not.toBeInTheDocument();
   });
@@ -123,6 +123,22 @@ describe('Phase 7 — Frontend Route Registration, Auth Header & Logout Integrat
 
     const logoutBtn = screen.getByRole('button', { name: /Log out/i });
     fireEvent.click(logoutBtn);
+
+    await waitFor(() => {
+      expect(logoutMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('invokes logout when Change Account is clicked in TopNav', async () => {
+    const logoutMock = vi.fn().mockResolvedValue(undefined);
+
+    renderWithAuth(<TopNav />, {
+      currentUser: mockAdminUser,
+      logout: logoutMock,
+    });
+
+    const changeAccountBtn = screen.getByRole('button', { name: /Change Account/i });
+    fireEvent.click(changeAccountBtn);
 
     await waitFor(() => {
       expect(logoutMock).toHaveBeenCalledTimes(1);

@@ -5,7 +5,7 @@ import { LandingPage } from '../features/landing/pages/LandingPage';
 import { SignupPage } from '../features/auth/pages/SignupPage';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { authApi } from '../features/auth/api/authApi';
-import { AuthProvider } from '../shared/context/AuthContext';
+import { AuthProvider, AuthContext } from '../shared/context/AuthContext';
 import { UserDto } from '../features/auth/types';
 
 vi.mock('../features/auth/api/authApi', () => ({
@@ -73,6 +73,44 @@ describe('Phase 11 — Multi-Tenant SaaS, Public Landing Page & Email OTP Authen
       expect(screen.getByText(/Add Your Fleet/i)).toBeInTheDocument();
       expect(screen.getByText(/Dispatch & Track/i)).toBeInTheDocument();
       expect(screen.getByText(/Optimize & Scale/i)).toBeInTheDocument();
+
+      // Explore FleetX buttons
+      expect(screen.getAllByText(/Explore FleetX/i).length).toBeGreaterThan(0);
+    });
+
+    it('renders authenticated options (Dashboard, Change Account, Logout) when user has active session', async () => {
+      const logoutMock = vi.fn().mockResolvedValue(undefined);
+
+      render(
+        <AuthContext.Provider
+          value={{
+            currentUser: mockOnboardedUser,
+            isAuthenticated: true,
+            loading: false,
+            error: null,
+            login: vi.fn(),
+            logout: logoutMock,
+            refreshUser: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <LandingPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      // Authenticated buttons in header and hero
+      expect(screen.getAllByRole('link', { name: /Dashboard/i }).length).toBeGreaterThan(0);
+      const changeAccountBtns = screen.getAllByRole('button', { name: /Change Account/i });
+      expect(changeAccountBtns.length).toBeGreaterThan(0);
+      const logoutBtns = screen.getAllByRole('button', { name: /Log out/i });
+      expect(logoutBtns.length).toBeGreaterThan(0);
+
+      // Test clicking Change Account invokes logout
+      fireEvent.click(changeAccountBtns[0]);
+      await waitFor(() => {
+        expect(logoutMock).toHaveBeenCalledTimes(1);
+      });
     });
   });
 
