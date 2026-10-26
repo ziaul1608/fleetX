@@ -3,10 +3,14 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './routes';
 import { AuthProvider } from '../shared/context/AuthContext';
 
-export const App: React.FC = () => {
+interface AppProps {
+  routerOverride?: any;
+}
+
+export const App: React.FC<AppProps> = ({ routerOverride }) => {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <RouterProvider router={routerOverride || router} />
     </AuthProvider>
   );
 };

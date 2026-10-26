@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { createMemoryRouter } from 'react-router-dom';
 import { App } from '../app/App';
+import { routes } from '../app/routes';
 import { authApi } from '../features/auth/api/authApi';
 
 vi.mock('../features/auth/api/authApi', () => ({
@@ -30,8 +32,17 @@ describe('FleetX Frontend UI Shell', () => {
     });
   });
 
-  it('renders the main Control Tower brand and dashboard header when authenticated', async () => {
-    render(<App />);
+  it('renders public cover page at root / without redirecting to login or dashboard', async () => {
+    const memoryRouter = createMemoryRouter(routes, { initialEntries: ['/'] });
+    render(<App routerOverride={memoryRouter} />);
+    await waitFor(() => {
+      expect(screen.getByText(/One Control Tower. Your Entire Fleet./i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders the main Control Tower brand and dashboard header when authenticated at /dashboard', async () => {
+    const memoryRouter = createMemoryRouter(routes, { initialEntries: ['/dashboard'] });
+    render(<App routerOverride={memoryRouter} />);
     await waitFor(() => {
       expect(screen.getByText(/Operational Control Tower/i)).toBeInTheDocument();
     });
@@ -39,7 +50,8 @@ describe('FleetX Frontend UI Shell', () => {
   });
 
   it('renders essential navigation links in the sidebar for admin user', async () => {
-    render(<App />);
+    const memoryRouter = createMemoryRouter(routes, { initialEntries: ['/dashboard'] });
+    render(<App routerOverride={memoryRouter} />);
     await waitFor(() => {
       expect(screen.getByText(/Fleet Inventory/i)).toBeInTheDocument();
     });
@@ -50,7 +62,8 @@ describe('FleetX Frontend UI Shell', () => {
   });
 
   it('renders KPI Stat Cards on the dashboard', async () => {
-    render(<App />);
+    const memoryRouter = createMemoryRouter(routes, { initialEntries: ['/dashboard'] });
+    render(<App routerOverride={memoryRouter} />);
     await waitFor(() => {
       expect(screen.getByText(/Active Vehicles/i)).toBeInTheDocument();
     });

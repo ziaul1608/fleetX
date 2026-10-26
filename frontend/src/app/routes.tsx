@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import { Layout } from './Layout';
 import { ProtectedRoute } from '../shared/components/ProtectedRoute';
 import { authRoutes } from '../features/auth/routes';
@@ -8,7 +8,7 @@ import { shipmentRoutes } from '../features/shipments/routes';
 import { trackingRoutes } from '../features/tracking/routes';
 import { LandingPage } from '../features/landing/pages/LandingPage';
 
-export const router = createBrowserRouter([
+export const routes: RouteObject[] = [
   // Public FleetX Cover Page: default entry point for everyone visiting '/'
   {
     path: '/',
@@ -20,7 +20,6 @@ export const router = createBrowserRouter([
 
   // Main application shell routes (all protected)
   {
-    path: '/',
     element: (
       <ProtectedRoute>
         <Layout />
@@ -34,4 +33,6 @@ export const router = createBrowserRouter([
       ...authRoutes.filter((r) => r.path !== 'login' && r.path !== 'signup'),
     ],
   },
-]);
+];
+
+export const router = createBrowserRouter(routes);

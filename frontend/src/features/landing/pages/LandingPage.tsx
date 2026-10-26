@@ -77,6 +77,9 @@ export const LandingPage: React.FC = () => {
 
           {/* Navigation Links */}
           <nav className="d-none d-lg-flex align-items-center gap-4 small fw-semibold" aria-label="Main Navigation">
+            <a href="#overview" className="text-decoration-none fx-link-nav">
+              Overview
+            </a>
             <a href="#features" className="text-decoration-none fx-link-nav">
               Features
             </a>
@@ -124,7 +127,7 @@ export const LandingPage: React.FC = () => {
                 <Link to="/login" className="btn fx-btn-glass btn-sm px-3 py-2 fw-medium" aria-label="Sign In">
                   Sign In
                 </Link>
-                <Link to="/signup" className="btn fx-btn-gold btn-sm px-3 py-2 fw-bold d-flex align-items-center gap-1" aria-label="Get Started">
+                <Link to="/login" className="btn fx-btn-gold btn-sm px-3 py-2 fw-bold d-flex align-items-center gap-1" aria-label="Get Started">
                   <span>Get Started</span>
                   <ArrowRight size={14} />
                 </Link>
@@ -170,9 +173,7 @@ export const LandingPage: React.FC = () => {
               color: 'var(--fx-muted-sand)',
             }}
           >
-            Manage vehicles, drivers, trips, shipments and logistics operations through one intelligent fleet management workspace.
-            Manage vehicles, drivers, trips, shipments and fleet operations from one secure workspace.
-            Empower your warehouse operations with dedicated private workspaces, real-time GPS telemetry simulations, automated geofence boundary enforcement, and end-to-end trip manifest dispatch.
+            FleetX brings vehicles, drivers, trips, shipments and logistics operations together in one intelligent fleet management workspace. Manage vehicles, drivers, trips, shipments and fleet operations from one secure workspace. Empower your warehouse operations with dedicated private workspaces, real-time GPS telemetry simulations, automated geofence boundary enforcement, and end-to-end trip manifest dispatch.
           </p>
 
           {/* CTA Buttons */}
@@ -181,7 +182,7 @@ export const LandingPage: React.FC = () => {
               <>
                 <Link to="/dashboard" className="btn fx-btn-gold btn-lg px-4 py-2.5 fw-bold d-flex align-items-center gap-2 shadow" aria-label="Dashboard">
                   <LayoutDashboard size={18} />
-                  <span>Dashboard ({currentUser?.companyName || 'My Warehouse'})</span>
+                  <span>Dashboard{currentUser?.companyName ? ` (${currentUser.companyName})` : ''}</span>
                   <ArrowRight size={18} />
                 </Link>
                 <button
@@ -203,29 +204,29 @@ export const LandingPage: React.FC = () => {
                   <LogOut size={18} />
                   <span>Logout</span>
                 </button>
-                <a href="#modules" className="btn fx-btn-glass btn-lg px-4 py-2.5 fw-semibold d-flex align-items-center gap-2">
+                <a href="#features" className="btn fx-btn-glass btn-lg px-4 py-2.5 fw-semibold d-flex align-items-center gap-2">
                   <span>Explore FleetX</span>
                 </a>
               </>
             ) : (
               <>
                 <Link
-                  to="/signup"
+                  to="/login"
                   className="btn fx-btn-gold btn-lg px-4 py-2.5 fw-bold d-flex align-items-center gap-2 shadow"
-                  aria-label="Register Private Warehouse"
+                  aria-label="Get Started"
                 >
                   <Sparkles size={18} />
-                  <span>Get Started — Register Private Warehouse</span>
+                  <span>Get Started</span>
                   <ArrowRight size={18} />
                 </Link>
                 <Link
                   to="/login"
                   className="btn fx-btn-glass btn-lg px-4 py-2.5 fw-semibold"
-                  aria-label="Sign In with Email OTP"
+                  aria-label="Sign In"
                 >
-                  <span>Sign In with Email OTP</span>
+                  <span>Sign In</span>
                 </Link>
-                <a href="#modules" className="btn fx-btn-glass btn-lg px-4 py-2.5 fw-semibold d-flex align-items-center gap-2">
+                <a href="#features" className="btn fx-btn-glass btn-lg px-4 py-2.5 fw-semibold d-flex align-items-center gap-2">
                   <span>Explore FleetX</span>
                 </a>
               </>
@@ -367,8 +368,8 @@ export const LandingPage: React.FC = () => {
                     Every newly registered warehouse receives an independent, zero-collision data partition with isolated foreign keys and thread-local tenancy.
                   </div>
                 </div>
-                <Link to="/signup" className="btn fx-btn-gold btn-sm px-4 py-2 fw-semibold text-nowrap">
-                  Provision Your Free Warehouse Workspace &rarr;
+                <Link to="/login" className="btn fx-btn-gold btn-sm px-4 py-2 fw-semibold text-nowrap">
+                  Get Started with FleetX &rarr;
                 </Link>
               </div>
             </div>
@@ -381,13 +382,13 @@ export const LandingPage: React.FC = () => {
         <div className="container py-4">
           <div className="text-center mb-5">
             <span className="badge fx-badge-gold px-3 py-1 rounded-pill mb-2 fw-semibold">
-              Integrated Platform
+              Platform Showcase
             </span>
             <h2 className="fw-extrabold mb-2" style={{ color: 'var(--fx-ivory-text)', letterSpacing: '-0.02em' }}>
-              5 Core Modules. One Unified Operating System.
+              Everything Your Fleet Needs, In One Workspace
             </h2>
-            <p className="mx-auto" style={{ maxWidth: '680px', color: 'var(--fx-muted-sand)' }}>
-              Everything your warehouse and logistics teams need to manage operations from receipt to final customer delivery.
+            <p className="mx-auto" style={{ maxWidth: '720px', color: 'var(--fx-muted-sand)' }}>
+              FleetX helps teams organize fleet assets, drivers, trip operations, shipment management and tracking through one application.
             </p>
           </div>
 
@@ -698,10 +699,10 @@ export const LandingPage: React.FC = () => {
         <div className="container py-4">
           <div className="text-center mb-5">
             <span className="badge fx-badge-amber px-3 py-1 rounded-pill mb-2 fw-semibold">
-              Streamlined Workflow
+              Streamlined Onboarding
             </span>
             <h2 className="fw-extrabold" style={{ color: 'var(--fx-ivory-text)', letterSpacing: '-0.02em' }}>
-              How to Onboard Your Warehouse
+              How to Get Started with FleetX
             </h2>
             <p style={{ color: 'var(--fx-muted-sand)' }}>Four simple steps to full operational visibility.</p>
           </div>
@@ -722,10 +723,10 @@ export const LandingPage: React.FC = () => {
                   1
                 </div>
                 <h5 className="fw-bold mb-2" style={{ color: 'var(--fx-ivory-text)' }}>
-                  Create Workspace
+                  Explore FleetX
                 </h5>
                 <p className="small mb-0" style={{ color: 'var(--fx-muted-sand)' }}>
-                  Register your company and warehouse depot name with work email verification.
+                  Understand the platform and its modules on the public homepage.
                 </p>
               </div>
             </div>
@@ -745,10 +746,10 @@ export const LandingPage: React.FC = () => {
                   2
                 </div>
                 <h5 className="fw-bold mb-2" style={{ color: 'var(--fx-ivory-text)' }}>
-                  Add Your Fleet
+                  Get Started
                 </h5>
                 <p className="small mb-0" style={{ color: 'var(--fx-muted-sand)' }}>
-                  Register vehicles with VIN &amp; plate numbers, and enroll licensed drivers.
+                  Click Get Started to open the existing login/signup page.
                 </p>
               </div>
             </div>
@@ -768,10 +769,10 @@ export const LandingPage: React.FC = () => {
                   3
                 </div>
                 <h5 className="fw-bold mb-2" style={{ color: 'var(--fx-ivory-text)' }}>
-                  Dispatch &amp; Track
+                  Create or Access Your Account
                 </h5>
                 <p className="small mb-0" style={{ color: 'var(--fx-muted-sand)' }}>
-                  Create trips, allocate cargo shipments, and track route execution with live telemetry.
+                  Choose the available Signup option to register a workspace, or Sign In to access an existing account.
                 </p>
               </div>
             </div>
@@ -791,18 +792,18 @@ export const LandingPage: React.FC = () => {
                   4
                 </div>
                 <h5 className="fw-bold mb-2" style={{ color: 'var(--fx-ivory-text)' }}>
-                  Optimize &amp; Scale
+                  Manage Your Operations
                 </h5>
                 <p className="small mb-0" style={{ color: 'var(--fx-muted-sand)' }}>
-                  Monitor geofences, catch delays, analyze fuel economy, and export audit reports.
+                  After successful authentication, access the dashboard and the modules available to your account.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="text-center mt-5">
-            <Link to="/signup" className="btn fx-btn-gold btn-lg px-5 py-2.5 fw-bold shadow">
-              Get Started Free &rarr;
+            <Link to="/login" className="btn fx-btn-gold btn-lg px-5 py-2.5 fw-bold shadow" aria-label="Get Started">
+              Get Started &rarr;
             </Link>
           </div>
         </div>
@@ -906,21 +907,52 @@ export const LandingPage: React.FC = () => {
                 style={{ borderColor: 'rgba(232, 211, 162, 0.28)' }}
               >
                 <h4 className="fw-bold mb-3" style={{ color: 'var(--fx-ivory-text)' }}>
-                  Ready to modernize your fleet operations?
+                  Enterprise Multi-Tenant Security
                 </h4>
                 <p className="small mb-4" style={{ color: 'var(--fx-muted-sand)' }}>
-                  Join independent warehouse operators who rely on FleetX for accurate dispatching, GPS telemetry tracking, and compliant manifest workflows.
+                  Join independent warehouse operators who rely on FleetX for secure workspace isolation, role-controlled access, and passwordless authentication.
                 </p>
                 <div className="d-grid gap-3">
-                  <Link to="/signup" className="btn fx-btn-gold py-2.5 fw-bold shadow">
-                    Create Your Workspace Free &rarr;
+                  <Link to="/login" className="btn fx-btn-gold py-2.5 fw-bold shadow" aria-label="Get Started">
+                    Get Started &rarr;
                   </Link>
-                  <Link to="/login" className="btn fx-btn-glass py-2.5 fw-semibold">
-                    Sign In with Registered Email
+                  <Link to="/login" className="btn fx-btn-glass py-2.5 fw-semibold" aria-label="Sign In">
+                    Sign In
                   </Link>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION F: FINAL CALL TO ACTION */}
+      <section className="py-5 border-top position-relative overflow-hidden" style={{ borderColor: 'rgba(232, 211, 162, 0.16)' }}>
+        <div className="container py-4 text-center">
+          <h2 className="display-5 fw-extrabold mb-3" style={{ color: 'var(--fx-ivory-text)', letterSpacing: '-0.02em' }}>
+            Ready to Bring Your Fleet Together?
+          </h2>
+          <p className="lead mx-auto mb-4" style={{ maxWidth: '640px', color: 'var(--fx-muted-sand)' }}>
+            Join warehouse operators who rely on FleetX for accurate dispatching, real-time GPS telemetry simulations, and secure multi-tenant operations.
+          </p>
+          <div className="d-flex flex-wrap justify-content-center gap-3">
+            {isAuthenticated ? (
+              <Link to="/dashboard" className="btn fx-btn-gold btn-lg px-5 py-2.5 fw-bold d-flex align-items-center gap-2 shadow" aria-label="Dashboard">
+                <LayoutDashboard size={18} />
+                <span>Go to Dashboard</span>
+                <ArrowRight size={18} />
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn fx-btn-gold btn-lg px-5 py-2.5 fw-bold d-flex align-items-center gap-2 shadow" aria-label="Get Started">
+                  <span>Get Started</span>
+                  <ArrowRight size={18} />
+                </Link>
+                <Link to="/login" className="btn fx-btn-glass btn-lg px-5 py-2.5 fw-semibold" aria-label="Sign In">
+                  <span>Sign In</span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -958,6 +990,7 @@ export const LandingPage: React.FC = () => {
                 Product Navigation
               </div>
               <div className="d-flex flex-wrap gap-3 small">
+                <a href="#overview" className="text-decoration-none fx-link-nav">Overview</a>
                 <a href="#features" className="text-decoration-none fx-link-nav">Features</a>
                 <a href="#modules" className="text-decoration-none fx-link-nav">Platform</a>
                 <a href="#how-it-works" className="text-decoration-none fx-link-nav">How It Works</a>
@@ -986,8 +1019,8 @@ export const LandingPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Link to="/signup" className="btn fx-btn-gold btn-sm fw-bold" aria-label="Sign Up Free">
-                      Sign Up Free
+                    <Link to="/login" className="btn fx-btn-gold btn-sm fw-bold" aria-label="Get Started">
+                      Get Started
                     </Link>
                     <Link to="/login" className="btn fx-btn-glass btn-sm fw-medium" aria-label="Sign In">
                       Sign In

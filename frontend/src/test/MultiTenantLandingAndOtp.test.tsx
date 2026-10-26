@@ -54,9 +54,21 @@ describe('Phase 11 — Multi-Tenant SaaS, Public Landing Page & Email OTP Authen
       expect(screen.getByText(/Intelligent Multi-Tenant Fleet & Logistics Operating System/i)).toBeInTheDocument();
       expect(screen.getByText(/Multi-Tenant Architecture & Passwordless Email OTP Access/i)).toBeInTheDocument();
 
-      // Navigation & CTA links
-      expect(screen.getByRole('link', { name: /Register Private Warehouse/i })).toHaveAttribute('href', '/signup');
-      expect(screen.getByRole('link', { name: /Sign In with Email OTP/i })).toHaveAttribute('href', '/login');
+      // Navigation & CTA links (Get Started -> /login, Sign In -> /login)
+      const getStartedLinks = screen.getAllByRole('link', { name: /Get Started/i });
+      expect(getStartedLinks.length).toBeGreaterThan(0);
+      getStartedLinks.forEach((link) => {
+        expect(link).toHaveAttribute('href', '/login');
+      });
+
+      const signInLinks = screen.getAllByRole('link', { name: /Sign In/i });
+      expect(signInLinks.length).toBeGreaterThan(0);
+      signInLinks.forEach((link) => {
+        expect(link).toHaveAttribute('href', '/login');
+      });
+
+      // Section C: Platform Showcase
+      expect(screen.getByText(/Everything Your Fleet Needs, In One Workspace/i)).toBeInTheDocument();
 
       // 5 Platform Modules
       expect(screen.getByText(/1. Identity & Admin/i)).toBeInTheDocument();
@@ -65,14 +77,14 @@ describe('Phase 11 — Multi-Tenant SaaS, Public Landing Page & Email OTP Authen
       expect(screen.getByText(/4. Shipment & Route Management/i)).toBeInTheDocument();
       expect(screen.getByText(/5. Tracking & Control Tower/i)).toBeInTheDocument();
 
-      // Core Capabilities & 4-Step Onboarding
-      expect(screen.getByText(/Private Warehouse Workspaces/i)).toBeInTheDocument();
-      expect(screen.getByText(/Passwordless Email OTP Security/i)).toBeInTheDocument();
-      expect(screen.getByText(/How to Onboard Your Warehouse/i)).toBeInTheDocument();
-      expect(screen.getByText(/Create Workspace/i)).toBeInTheDocument();
-      expect(screen.getByText(/Add Your Fleet/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dispatch & Track/i)).toBeInTheDocument();
-      expect(screen.getByText(/Optimize & Scale/i)).toBeInTheDocument();
+      // Section D: 4-Step Onboarding Guide
+      expect(screen.getByText(/How to Get Started with FleetX/i)).toBeInTheDocument();
+      expect(screen.getByText(/Click Get Started to open the existing login\/signup page/i)).toBeInTheDocument();
+      expect(screen.getByText(/Create or Access Your Account/i)).toBeInTheDocument();
+      expect(screen.getByText(/Manage Your Operations/i)).toBeInTheDocument();
+
+      // Section F: Final CTA
+      expect(screen.getByText(/Ready to Bring Your Fleet Together\?/i)).toBeInTheDocument();
 
       // Explore FleetX buttons
       expect(screen.getAllByText(/Explore FleetX/i).length).toBeGreaterThan(0);

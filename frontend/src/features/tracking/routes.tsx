@@ -6,10 +6,6 @@ const ReportsPage = lazy(() => import('./pages/ReportsPage').then(m => ({ defaul
 
 export const trackingRoutes: RouteObject[] = [
   {
-    index: true,
-    element: <ControlTowerPage />,
-  },
-  {
     path: 'dashboard',
     element: <ControlTowerPage />,
   },
