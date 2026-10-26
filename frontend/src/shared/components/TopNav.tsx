@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Search, UserCircle, LogOut, Users, Globe, Shield } from 'lucide-react';
+import { Bell, Search, UserCircle, LogOut, Users, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -145,12 +145,6 @@ export const TopNav: React.FC<TopNavProps> = () => {
               <div className="badge fx-badge-gold mt-1" style={{ fontSize: '0.65rem' }}>
                 Tenant #{currentUser?.tenantId ?? 1} &bull; {currentUser?.companyName || 'Warehouse'}
               </div>
-            </li>
-            <li>
-              <Link className="dropdown-item small d-flex align-items-center gap-2 py-2" to="/">
-                <Globe size={15} style={{ color: 'var(--fx-champagne-gold)' }} />
-                <span>Public Cover Page</span>
-              </Link>
             </li>
             <li>
               <Link className="dropdown-item small d-flex align-items-center gap-2 py-2" to="/profile">

@@ -14,7 +14,6 @@ import {
   Navigation,
   MapPin,
   LogOut,
-  Globe,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -153,44 +152,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           </NavLink>
         )}
 
-        <div className="px-3 pt-3 pb-1 text-uppercase fw-bold" style={{ fontSize: '0.65rem', color: 'var(--fx-muted-sand)', letterSpacing: '0.05em' }}>
-          {!collapsed && 'Session & Portal'}
+        <div className="pt-2 mt-2 border-top" style={{ borderColor: 'rgba(232, 211, 162, 0.12)' }}>
+          <button
+            onClick={async () => {
+              try { await logout(); } catch {}
+              navigate('/');
+            }}
+            className="fx-nav-item w-100 text-start border-0 bg-transparent text-danger-emphasis"
+            style={{ cursor: 'pointer' }}
+            title="Log Out"
+            aria-label="Log Out"
+            type="button"
+          >
+            <LogOut size={18} className="icon" />
+            {!collapsed && <span className="label">Log Out</span>}
+          </button>
         </div>
-
-        <NavLink to="/" className={({ isActive }) => `fx-nav-item ${isActive ? 'active' : ''}`}>
-          <Globe size={18} className="icon" />
-          <span className="label">Cover Page</span>
-        </NavLink>
-
-        <button
-          onClick={async () => {
-            try { await logout(); } catch {}
-            navigate('/login');
-          }}
-          className="fx-nav-item w-100 text-start border-0 bg-transparent"
-          style={{ cursor: 'pointer', color: 'var(--fx-champagne-gold)' }}
-          title="Change Account"
-          aria-label="Change Account"
-          type="button"
-        >
-          <Users size={18} className="icon" />
-          {!collapsed && <span className="label">Change Account</span>}
-        </button>
-
-        <button
-          onClick={async () => {
-            try { await logout(); } catch {}
-            navigate('/');
-          }}
-          className="fx-nav-item w-100 text-start border-0 bg-transparent text-danger-emphasis"
-          style={{ cursor: 'pointer' }}
-          title="Log Out"
-          aria-label="Log Out"
-          type="button"
-        >
-          <LogOut size={18} className="icon" />
-          {!collapsed && <span className="label">Log Out</span>}
-        </button>
       </div>
 
       {/* Footer Info */}
