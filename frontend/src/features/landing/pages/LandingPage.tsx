@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Radio,
   Building2,
@@ -20,13 +20,30 @@ import {
   Lock,
   Gauge,
   Sparkles,
+  LogOut,
+  LayoutDashboard,
 } from 'lucide-react';
 import { AuthContext } from '../../../shared/context/AuthContext';
 
 export const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const auth = useContext(AuthContext);
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const currentUser = auth?.currentUser;
+
+  const handleChangeAccount = async () => {
+    try {
+      await auth?.logout();
+    } catch {}
+    navigate('/login');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await auth?.logout();
+    } catch {}
+    navigate('/');
+  };
 
   return (
     <div className="min-vh-100 d-flex flex-column" style={{ background: 'var(--fx-espresso-bg)', color: 'var(--fx-ivory-text)' }}>
@@ -60,14 +77,11 @@ export const LandingPage: React.FC = () => {
 
           {/* Navigation Links */}
           <nav className="d-none d-lg-flex align-items-center gap-4 small fw-semibold" aria-label="Main Navigation">
-            <a href="#overview" className="text-decoration-none fx-link-nav">
-              Overview
+            <a href="#features" className="text-decoration-none fx-link-nav">
+              Features
             </a>
             <a href="#modules" className="text-decoration-none fx-link-nav">
               Platform
-            </a>
-            <a href="#features" className="text-decoration-none fx-link-nav">
-              Capabilities
             </a>
             <a href="#how-it-works" className="text-decoration-none fx-link-nav">
               How It Works
@@ -80,16 +94,37 @@ export const LandingPage: React.FC = () => {
           {/* Action CTAs */}
           <div className="d-flex align-items-center gap-2">
             {isAuthenticated ? (
-              <Link to="/dashboard" className="btn fx-btn-gold btn-sm px-3 py-2 fw-bold d-flex align-items-center gap-2">
-                <span>Enter Control Tower</span>
-                <ArrowRight size={15} />
-              </Link>
+              <>
+                <Link to="/dashboard" className="btn fx-btn-gold btn-sm px-3 py-2 fw-bold d-flex align-items-center gap-1.5" aria-label="Dashboard">
+                  <LayoutDashboard size={15} />
+                  <span>Dashboard</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleChangeAccount}
+                  className="btn fx-btn-glass btn-sm px-2.5 py-2 fw-medium d-flex align-items-center gap-1"
+                  aria-label="Change Account"
+                >
+                  <Users size={14} />
+                  <span className="d-none d-sm-inline">Change Account</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="btn btn-sm px-2.5 py-2 fw-medium d-flex align-items-center gap-1 border"
+                  style={{ background: 'rgba(224, 108, 117, 0.15)', borderColor: 'rgba(224, 108, 117, 0.3)', color: '#FFA4AC' }}
+                  aria-label="Log out"
+                >
+                  <LogOut size={14} />
+                  <span className="d-none d-sm-inline">Logout</span>
+                </button>
+              </>
             ) : (
               <>
-                <Link to="/login" className="btn fx-btn-glass btn-sm px-3 py-2 fw-medium">
+                <Link to="/login" className="btn fx-btn-glass btn-sm px-3 py-2 fw-medium" aria-label="Sign In">
                   Sign In
                 </Link>
-                <Link to="/signup" className="btn fx-btn-gold btn-sm px-3 py-2 fw-bold d-flex align-items-center gap-1">
+                <Link to="/signup" className="btn fx-btn-gold btn-sm px-3 py-2 fw-bold d-flex align-items-center gap-1" aria-label="Get Started">
                   <span>Get Started</span>
                   <ArrowRight size={14} />
                 </Link>
@@ -129,12 +164,13 @@ export const LandingPage: React.FC = () => {
           <p
             className="lead mx-auto mb-4"
             style={{
-              maxWidth: '780px',
+              maxWidth: '820px',
               fontSize: '1.2rem',
               lineHeight: '1.65',
               color: 'var(--fx-muted-sand)',
             }}
           >
+            Manage vehicles, drivers, trips, shipments and logistics operations through one intelligent fleet management workspace.
             Manage vehicles, drivers, trips, shipments and fleet operations from one secure workspace.
             Empower your warehouse operations with dedicated private workspaces, real-time GPS telemetry simulations, automated geofence boundary enforcement, and end-to-end trip manifest dispatch.
           </p>
@@ -142,10 +178,35 @@ export const LandingPage: React.FC = () => {
           {/* CTA Buttons */}
           <div className="d-flex flex-wrap justify-content-center gap-3 mb-5">
             {isAuthenticated ? (
-              <Link to="/dashboard" className="btn fx-btn-gold btn-lg px-4 py-2.5 fw-bold d-flex align-items-center gap-2 shadow">
-                <span>Go to Control Tower ({currentUser?.companyName || 'My Warehouse'})</span>
-                <ArrowRight size={18} />
-              </Link>
+              <>
+                <Link to="/dashboard" className="btn fx-btn-gold btn-lg px-4 py-2.5 fw-bold d-flex align-items-center gap-2 shadow" aria-label="Dashboard">
+                  <LayoutDashboard size={18} />
+                  <span>Dashboard ({currentUser?.companyName || 'My Warehouse'})</span>
+                  <ArrowRight size={18} />
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleChangeAccount}
+                  className="btn fx-btn-glass btn-lg px-4 py-2.5 fw-semibold d-flex align-items-center gap-2"
+                  aria-label="Change Account"
+                >
+                  <Users size={18} />
+                  <span>Change Account</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="btn btn-lg px-4 py-2.5 fw-semibold d-flex align-items-center gap-2 border"
+                  style={{ background: 'rgba(224, 108, 117, 0.15)', borderColor: 'rgba(224, 108, 117, 0.3)', color: '#FFA4AC' }}
+                  aria-label="Logout"
+                >
+                  <LogOut size={18} />
+                  <span>Logout</span>
+                </button>
+                <a href="#modules" className="btn fx-btn-glass btn-lg px-4 py-2.5 fw-semibold d-flex align-items-center gap-2">
+                  <span>Explore FleetX</span>
+                </a>
+              </>
             ) : (
               <>
                 <Link
@@ -164,6 +225,9 @@ export const LandingPage: React.FC = () => {
                 >
                   <span>Sign In with Email OTP</span>
                 </Link>
+                <a href="#modules" className="btn fx-btn-glass btn-lg px-4 py-2.5 fw-semibold d-flex align-items-center gap-2">
+                  <span>Explore FleetX</span>
+                </a>
               </>
             )}
           </div>
@@ -863,24 +927,84 @@ export const LandingPage: React.FC = () => {
 
       {/* Footer */}
       <footer
-        className="mt-auto py-4 border-top"
+        className="mt-auto py-5 border-top"
         style={{
-          background: 'rgba(32, 23, 19, 0.85)',
+          background: 'rgba(32, 23, 19, 0.95)',
           borderColor: 'rgba(232, 211, 162, 0.16)',
         }}
       >
-        <div className="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 small" style={{ color: 'var(--fx-muted-sand)' }}>
-          <div className="d-flex align-items-center gap-2">
-            <Radio size={16} style={{ color: 'var(--fx-champagne-gold)' }} />
-            <span className="fw-bold" style={{ color: 'var(--fx-ivory-text)' }}>
-              FleetX
-            </span>
-            <span>&bull; Intelligent Fleet &amp; Logistics Management System</span>
+        <div className="container">
+          <div className="row g-4 pb-4 border-bottom" style={{ borderColor: 'rgba(232, 211, 162, 0.12)' }}>
+            <div className="col-lg-5 col-md-6">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <div
+                  className="p-1.5 rounded-2 d-flex align-items-center justify-content-center"
+                  style={{ background: 'linear-gradient(135deg, #E8D3A2 0%, #C8753D 100%)', color: '#201713' }}
+                >
+                  <Radio size={16} strokeWidth={2.5} />
+                </div>
+                <span className="fw-extrabold fs-5" style={{ color: 'var(--fx-ivory-text)' }}>
+                  Fleet<span style={{ color: 'var(--fx-champagne-gold)' }}>X</span>
+                </span>
+                <span className="badge fx-badge-gold ms-1" style={{ fontSize: '0.65rem' }}>v2.0</span>
+              </div>
+              <p className="small mb-3" style={{ color: 'var(--fx-muted-sand)', maxWidth: '380px' }}>
+                One Control Tower for your entire fleet. Multi-tenant warehouse isolation, real-time telemetry simulation, and passwordless authentication.
+              </p>
+            </div>
+
+            <div className="col-lg-4 col-md-6">
+              <div className="fw-bold small mb-2 text-uppercase" style={{ color: 'var(--fx-champagne-gold)', letterSpacing: '0.05em' }}>
+                Product Navigation
+              </div>
+              <div className="d-flex flex-wrap gap-3 small">
+                <a href="#features" className="text-decoration-none fx-link-nav">Features</a>
+                <a href="#modules" className="text-decoration-none fx-link-nav">Platform</a>
+                <a href="#how-it-works" className="text-decoration-none fx-link-nav">How It Works</a>
+                <a href="#security" className="text-decoration-none fx-link-nav">Security</a>
+              </div>
+            </div>
+
+            <div className="col-lg-3 col-md-12">
+              <div className="fw-bold small mb-2 text-uppercase" style={{ color: 'var(--fx-champagne-gold)', letterSpacing: '0.05em' }}>
+                {isAuthenticated ? 'Your Account' : 'Get Started'}
+              </div>
+              <div className="d-flex flex-column gap-2 small">
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/dashboard" className="btn fx-btn-gold btn-sm fw-bold" aria-label="Dashboard">
+                      Dashboard
+                    </Link>
+                    <div className="d-flex gap-2">
+                      <button onClick={handleChangeAccount} type="button" className="btn fx-btn-glass btn-sm flex-grow-1" aria-label="Change Account">
+                        Change Account
+                      </button>
+                      <button onClick={handleLogout} type="button" className="btn btn-sm btn-outline-danger flex-grow-1" aria-label="Log out">
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/signup" className="btn fx-btn-gold btn-sm fw-bold" aria-label="Sign Up Free">
+                      Sign Up Free
+                    </Link>
+                    <Link to="/login" className="btn fx-btn-glass btn-sm fw-medium" aria-label="Sign In">
+                      Sign In
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="d-flex align-items-center gap-3">
-            <span>&copy; {new Date().getFullYear()} FleetX SaaS</span>
-            <span>&bull;</span>
-            <span>Multi-Tenant SaaS Edition (Phase 11)</span>
+
+          <div className="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 pt-4 small" style={{ color: 'var(--fx-muted-sand)' }}>
+            <div>
+              &copy; {new Date().getFullYear()} FleetX SaaS &bull; Multi-Tenant Operating System (Phase 11)
+            </div>
+            <div className="d-flex align-items-center gap-3">
+              <a href="#overview" className="text-decoration-none" style={{ color: 'var(--fx-muted-sand)' }}>Back to top &uarr;</a>
+            </div>
           </div>
         </div>
       </footer>
