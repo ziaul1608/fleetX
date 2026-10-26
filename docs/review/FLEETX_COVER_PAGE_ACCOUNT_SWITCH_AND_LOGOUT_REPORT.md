@@ -120,3 +120,40 @@
 | **4-Step Onboarding Guide** | Step-by-step visual workflow | Tested in `MultiTenantLandingAndOtp.test.tsx` | **VERIFIED** |
 | **Footer Navigation** | Product & auth action links | Tested in `MultiTenantLandingAndOtp.test.tsx` | **VERIFIED** |
 | **Continuous Git Push** | Auto-pushed to `origin/feature/multitenant-email-otp` | Remote SHA verified | **VERIFIED** |
+| **Live Production Release** | Deployed on Render (`fleetx-h9wf`) | Serving `assets/index-4aU3YxgX.js` | **VERIFIED** |
+
+---
+
+## 6. Live Production Deployment Verification
+
+### 6.1 Git History & Pull Request
+- **Feature Branch Commit:** `9ed7d4e` (`9ed7d4e44ab7a6546fef34507986eee08ecd1dd8`)
+- **Pull Request:** [#10](https://github.com/ziaul1608/fleetX/pull/10) (*feat(portal): enforce public cover page at root and implement change account and logout flows*)
+- **Production Merge Commit:** `8bca743` (merged into `main` and pushed to `origin/main`)
+
+### 6.2 Render Production Status
+- **Render Service:** `fleetx-h9wf`
+- **Target URL:** `https://fleetx-h9wf.onrender.com/`
+- **Deployed Commit:** `8bca743`
+- **Active Asset Bundles:**
+  - `assets/index-4aU3YxgX.js` (HTTP 200, contains *"One Control Tower. Your Entire Fleet."*, *"Change Account"*, *"Explore FleetX"*)
+  - `assets/index-CUAakaJm.css` (HTTP 200)
+- **Live Health Endpoint:**
+  - `GET /api/health` -> HTTP 200 (`{"status":"UP","application":"fleetx-backend"}`)
+  - `HEAD /api/health` -> HTTP 200 (resolved previous 401 on HEAD requests)
+- **SPA Routing Verification:**
+  - `GET /` -> HTTP 200 (renders public cover page directly)
+  - `GET /signup` -> HTTP 200
+  - `GET /login` -> HTTP 200
+  - `GET /dashboard` -> HTTP 200
+
+---
+
+## 7. Final Verification Status
+
+- **COVER PAGE:** **VERIFIED**
+- **CHANGE ACCOUNT:** **VERIFIED**
+- **LOGOUT:** **VERIFIED**
+- **GITHUB PUSH:** **VERIFIED**
+- **LIVE DEPLOYMENT:** **VERIFIED**
+
