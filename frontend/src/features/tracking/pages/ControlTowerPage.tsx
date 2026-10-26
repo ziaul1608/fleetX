@@ -248,38 +248,42 @@ export const ControlTowerPage: React.FC = () => {
           <div className="btn-group btn-group-sm" role="group" aria-label="Visualization Mode">
             <button
               type="button"
-              className={`btn ${
-                activeView === '2d' ? 'fx-btn-gold fw-bold' : 'fx-btn-glass'
+              className={`btn fx-view-btn text-white ${
+                activeView === '2d' ? 'fx-active fw-bold' : ''
               }`}
+              style={{ color: '#FFFFFF' }}
               onClick={() => setActiveView('2d')}
             >
-              <MapPin size={14} className="me-1" /> 2D Live Map
+              <MapPin size={14} className="me-1 text-white" style={{ color: '#FFFFFF' }} /> 2D Live Map
             </button>
             <button
               type="button"
-              className={`btn ${
-                activeView === '3d' ? 'fx-btn-gold fw-bold' : 'fx-btn-glass'
+              className={`btn fx-view-btn text-white ${
+                activeView === '3d' ? 'fx-active fw-bold' : ''
               }`}
+              style={{ color: '#FFFFFF' }}
               onClick={() => setActiveView('3d')}
             >
-              <Box size={14} className="me-1" /> 3D Fleet Canvas
+              <Box size={14} className="me-1 text-white" style={{ color: '#FFFFFF' }} /> 3D Fleet Canvas
             </button>
             <button
               type="button"
-              className={`btn ${
-                activeView === 'list' ? 'fx-btn-gold fw-bold' : 'fx-btn-glass'
+              className={`btn fx-view-btn text-white ${
+                activeView === 'list' ? 'fx-active fw-bold' : ''
               }`}
+              style={{ color: '#FFFFFF' }}
               onClick={() => setActiveView('list')}
             >
-              <Activity size={14} className="me-1" /> Telemetry Table
+              <Activity size={14} className="me-1 text-white" style={{ color: '#FFFFFF' }} /> Telemetry Table
             </button>
           </div>
 
           <Link
             to="/tracking/reports"
-            className="btn fx-btn-glass btn-sm d-inline-flex align-items-center gap-1"
+            className="btn fx-view-btn btn-sm text-white d-inline-flex align-items-center gap-1 shadow-sm"
+            style={{ color: '#FFFFFF' }}
           >
-            <FileSpreadsheet size={15} /> Reports &amp; CSV Export
+            <FileSpreadsheet size={15} className="me-1 text-white" style={{ color: '#FFFFFF' }} /> Reports &amp; CSV Export
           </Link>
         </div>
       </div>

@@ -158,14 +158,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
               try { await logout(); } catch {}
               navigate('/');
             }}
-            className="fx-nav-item w-100 text-start border-0 bg-transparent text-danger-emphasis"
-            style={{ cursor: 'pointer' }}
+            className="fx-nav-item fx-logout-btn w-100 text-start border-0 bg-transparent text-white"
+            style={{ cursor: 'pointer', color: '#FFFFFF' }}
             title="Log Out"
             aria-label="Log Out"
             type="button"
           >
-            <LogOut size={18} className="icon" />
-            {!collapsed && <span className="label">Log Out</span>}
+            <LogOut size={18} className="icon text-white" style={{ color: '#FFFFFF' }} />
+            {!collapsed && <span className="label text-white fw-semibold" style={{ color: '#FFFFFF' }}>Log Out</span>}
           </button>
         </div>
       </div>

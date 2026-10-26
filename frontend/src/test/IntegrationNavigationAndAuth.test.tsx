@@ -164,5 +164,16 @@ describe('Phase 7 — Frontend Route Registration, Auth Header & Logout Integrat
     expect(config.url).toBe('/api/v1/shipments');
     expect(config.headers['X-XSRF-TOKEN']).toBe('integration-csrf-token-999');
   });
+
+  it('renders Sidebar Log Out button with white high-visibility styling', () => {
+    renderWithAuth(<Sidebar collapsed={false} onToggle={() => {}} />, {
+      currentUser: mockAdminUser,
+    });
+
+    const logoutBtn = screen.getByRole('button', { name: /Log Out/i });
+    expect(logoutBtn).toBeInTheDocument();
+    expect(logoutBtn.className).toContain('text-white');
+    expect(logoutBtn.className).toContain('fx-logout-btn');
+  });
 });
 

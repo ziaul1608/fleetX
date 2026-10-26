@@ -261,4 +261,39 @@ describe('Module 5 — Live Tracking & Intelligent Fleet Control Tower Component
       await screen.findByText(/No persisted records found in the database/i)
     ).toBeInTheDocument();
   });
+
+  it('renders 2D Live Map, 3D Fleet Canvas, Telemetry Table, and Reports buttons with white high-visibility styling', async () => {
+    vi.mocked(trackingApi.getControlTowerSummary).mockResolvedValue(mockSummary);
+    vi.mocked(trackingApi.getSimulatorSessions).mockResolvedValue([mockSession]);
+    vi.mocked(trackingApi.getAlerts).mockResolvedValue({
+      content: [],
+      pageNumber: 0,
+      pageSize: 25,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    });
+    vi.mocked(trackingApi.getGeofences).mockResolvedValue([]);
+
+    render(
+      <MemoryRouter>
+        <ControlTowerPage />
+      </MemoryRouter>
+    );
+
+    const btn2D = await screen.findByRole('button', { name: /2D Live Map/i });
+    const btn3D = screen.getByRole('button', { name: /3D Fleet Canvas/i });
+    const btnTable = screen.getByRole('button', { name: /Telemetry Table/i });
+    const btnReports = screen.getByRole('link', { name: /Reports & CSV Export/i });
+
+    expect(btn2D).toBeInTheDocument();
+    expect(btn3D).toBeInTheDocument();
+    expect(btnTable).toBeInTheDocument();
+    expect(btnReports).toBeInTheDocument();
+
+    expect(btn2D.className).toContain('text-white');
+    expect(btn3D.className).toContain('text-white');
+    expect(btnTable.className).toContain('text-white');
+    expect(btnReports.className).toContain('text-white');
+  });
 });

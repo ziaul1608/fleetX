@@ -305,6 +305,33 @@ a:hover {
   margin-right: 0;
 }
 
+/* Sidebar Log Out Button — High Visibility White */
+.fx-logout-btn {
+  color: #FFFFFF !important;
+  transition: all 0.2s ease;
+}
+
+.fx-logout-btn .icon,
+.fx-logout-btn svg {
+  color: #FFFFFF !important;
+}
+
+.fx-logout-btn .label {
+  color: #FFFFFF !important;
+}
+
+.fx-logout-btn:hover {
+  background: rgba(224, 108, 117, 0.25) !important;
+  border-color: rgba(224, 108, 117, 0.45) !important;
+  color: #FFFFFF !important;
+}
+
+.fx-logout-btn:hover .icon,
+.fx-logout-btn:hover svg,
+.fx-logout-btn:hover .label {
+  color: #FFFFFF !important;
+}
+
 /* ==============================================================================
    Cards & Surfaces Overrides
    ============================================================================== */
@@ -533,6 +560,94 @@ h1, h2, h3, h4, h5, h6,
 .btn-danger:hover {
   background: rgba(224, 108, 117, 0.4) !important;
   border-color: #E06C75 !important;
+  color: #FFFFFF !important;
+}
+
+/* Glass Outline Button: Liquid Glass with Crisp White Text */
+.fx-btn-glass {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(232, 211, 162, 0.3) !important;
+  color: #FFFFFF !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-weight: 500;
+  border-radius: var(--fx-radius);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.fx-btn-glass:hover,
+.fx-btn-glass:focus {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: #FFFFFF !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.fx-btn-glass:active {
+  transform: translateY(0);
+}
+
+.fx-btn-glass svg {
+  color: #FFFFFF !important;
+}
+
+/* Gold Gradient Button */
+.fx-btn-gold {
+  background: linear-gradient(135deg, #E8D3A2 0%, #CFB778 100%) !important;
+  color: #201713 !important;
+  border: 1px solid #E8D3A2 !important;
+  font-weight: 600;
+  border-radius: var(--fx-radius);
+  box-shadow: 0 2px 10px rgba(232, 211, 162, 0.25);
+  transition: all 0.2s ease;
+}
+
+.fx-btn-gold:hover,
+.fx-btn-gold:focus {
+  background: linear-gradient(135deg, #F2E4C2 0%, #D8C388 100%) !important;
+  color: #160F0C !important;
+  border-color: #F2E4C2 !important;
+  box-shadow: 0 4px 16px rgba(232, 211, 162, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Control Tower Visualization View Switcher & Action Buttons — High Contrast White */
+.fx-view-btn {
+  background: rgba(48, 33, 28, 0.85) !important;
+  border: 1px solid rgba(232, 211, 162, 0.35) !important;
+  color: #FFFFFF !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.fx-view-btn svg {
+  color: #FFFFFF !important;
+}
+
+.fx-view-btn:hover,
+.fx-view-btn:focus {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: #FFFFFF !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 3px 12px rgba(255, 255, 255, 0.2);
+}
+
+.fx-view-btn.active,
+.fx-view-btn.fx-active {
+  background: linear-gradient(135deg, rgba(200, 117, 61, 0.9) 0%, rgba(166, 93, 44, 0.98) 100%) !important;
+  border: 1px solid #E8D3A2 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 14px rgba(200, 117, 61, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+}
+
+.fx-view-btn.active svg,
+.fx-view-btn.fx-active svg {
   color: #FFFFFF !important;
 }
 
